@@ -20,3 +20,4 @@ AI assistants cannot reliably “discover” repository contents without explici
 - `Project_Prompt.md` — Authoritative reproduction guide and decision record
 - `FILE_INDEX.md` — Index of repository contents (maintain as the repo grows)
 - `README.md` — Orientation and usage instructions (this file)
+- `STATUS.md` — Identifies the completed, current and next activities
