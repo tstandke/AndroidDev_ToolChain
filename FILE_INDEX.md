@@ -1,4 +1,5 @@
 # FILE_INDEX
+# TEST
 
 This file provides a **stable, human- and AI-readable index** of all meaningful
 files and directories in this repository.
