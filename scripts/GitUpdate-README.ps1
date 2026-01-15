@@ -1,36 +1,43 @@
 <#
 .SYNOPSIS
-Stages, commits, and pushes README.md updates for this repository.
+Update README.md
 
 .DESCRIPTION
-This script is a safe, narrow automation that only commits README.md.
-It is intended to reduce repeated typing for a common workflow.
+Safe, narrow automation that stages, commits, and pushes README.md.
+This version auto-detects the repository root by walking up from this script's
+directory until it finds a `.git` folder. You may also provide -RepoPath.
 
 .PARAMETER RepoPath
-Path to the local repository root. Defaults to the script's directory.
+Optional explicit path to the repository root. If omitted, the script will
+auto-detect the root by searching parent directories for `.git`.
 
 .PARAMETER Message
 Commit message to use. Defaults to a timestamped message.
-
-.EXAMPLE
-.\GitUpdate-README.ps1
-
-.EXAMPLE
-.\GitUpdate-README.ps1 -RepoPath "C:\Users\Tim\AndroidDev_ToolChain" -Message "Docs: update README"
 #>
 
 [CmdletBinding()]
 param(
   [Parameter(Mandatory=$false)]
-  [string]$RepoPath = $PSScriptRoot,
+  [string]$RepoPath,
 
   [Parameter(Mandatory=$false)]
   [string]$Message
 )
 
-function Fail($msg) {
+function Fail([string]$msg) {
   Write-Error $msg
   exit 1
+}
+
+function Find-GitRoot([string]$startPath) {
+  $p = (Resolve-Path -LiteralPath $startPath).Path
+  while ($true) {
+    if (Test-Path -LiteralPath (Join-Path $p ".git")) { return $p }
+    $parent = Split-Path -Path $p -Parent
+    if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $p) { break }
+    $p = $parent
+  }
+  return $null
 }
 
 # Preconditions
@@ -38,37 +45,38 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
   Fail "Git is not installed or not on PATH. Verify with: git --version"
 }
 
-if (-not (Test-Path -LiteralPath $RepoPath)) {
-  Fail "RepoPath does not exist: $RepoPath"
+# Resolve repo root
+if ([string]::IsNullOrWhiteSpace($RepoPath)) {
+  $RepoPath = Find-GitRoot -startPath $PSScriptRoot
+  if ([string]::IsNullOrWhiteSpace($RepoPath)) {
+    Fail "Unable to locate repository root (no .git found above: $PSScriptRoot). Provide -RepoPath explicitly."
+  }
+} else {
+  if (-not (Test-Path -LiteralPath $RepoPath)) {
+    Fail "RepoPath does not exist: $RepoPath"
+  }
+  $RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
+  if (-not (Test-Path -LiteralPath (Join-Path $RepoPath ".git"))) {
+    Fail "RepoPath is not a Git repository (missing .git): $RepoPath"
+  }
 }
 
 Set-Location -LiteralPath $RepoPath
-
-if (-not (Test-Path -LiteralPath ".git")) {
-  Fail "RepoPath is not a Git repository (missing .git): $RepoPath"
-}
 
 if (-not (Test-Path -LiteralPath "README.md")) {
   Fail "README.md not found in repo root: $RepoPath"
 }
 
-# Ensure remote exists (origin)
-$remotes = git remote 2>$null
-if ($LASTEXITCODE -ne 0) { Fail "Failed to list git remotes." }
-if (-not ($remotes -split "\r?\n" | Where-Object { $_ -eq "origin" })) {
-  Fail "Remote 'origin' is not configured. Run: git remote -v"
-}
-
-# Check if README has changes (tracked changes only)
-$statusLine = git status --porcelain -- README.md
+# Detect changes
+$status = git status --porcelain -- README.md
 if ($LASTEXITCODE -ne 0) { Fail "Failed to read git status." }
 
-if ([string]::IsNullOrWhiteSpace($statusLine)) {
+if ([string]::IsNullOrWhiteSpace($status)) {
   Write-Host "No changes detected in README.md. Nothing to commit."
   exit 0
 }
 
-# Stage README.md
+# Stage
 git add -- README.md
 if ($LASTEXITCODE -ne 0) { Fail "git add failed." }
 
@@ -79,21 +87,13 @@ if ([string]::IsNullOrWhiteSpace($Message)) {
 }
 
 git commit -m $Message -- README.md
-if ($LASTEXITCODE -ne 0) {
-  # If commit failed due to nothing to commit, treat as clean exit
-  $postStatus = git status --porcelain -- README.md
-  if ([string]::IsNullOrWhiteSpace($postStatus)) {
-    Write-Host "README.md was staged but no commit was created (nothing to commit)."
-    exit 0
-  }
-  Fail "git commit failed."
-}
+if ($LASTEXITCODE -ne 0) { Fail "git commit failed." }
 
-# Push current branch to origin
+# Push current branch
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) { Fail "Unable to determine current branch." }
 
 git push origin $branch
-if ($LASTEXITCODE -ne 0) { Fail "git push failed. Ensure you have network access and credentials." }
+if ($LASTEXITCODE -ne 0) { Fail "git push failed." }
 
 Write-Host "Success: README.md committed and pushed to origin/$branch"

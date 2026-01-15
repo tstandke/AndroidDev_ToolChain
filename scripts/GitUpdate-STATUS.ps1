@@ -1,75 +1,99 @@
 <#
 .SYNOPSIS
-Stages, commits, and pushes STATUS.md updates for this repository.
+Update STATUS.md
 
 .DESCRIPTION
-This script is a safe, narrow automation that only commits STATUS.md.
-Use it to record progress as the toolchain evolves.
+Safe, narrow automation that stages, commits, and pushes STATUS.md.
+This version auto-detects the repository root by walking up from this script's
+directory until it finds a `.git` folder. You may also provide -RepoPath.
 
 .PARAMETER RepoPath
-Path to the local repository root. Defaults to the script's directory.
+Optional explicit path to the repository root. If omitted, the script will
+auto-detect the root by searching parent directories for `.git`.
 
 .PARAMETER Message
 Commit message to use. Defaults to a timestamped message.
-
-.EXAMPLE
-.\GitUpdate-STATUS.ps1
-
-.EXAMPLE
-.\GitUpdate-STATUS.ps1 -RepoPath "C:\Users\Tim\AndroidDev_ToolChain" -Message "Status: Android Studio installed"
 #>
 
 [CmdletBinding()]
 param(
   [Parameter(Mandatory=$false)]
-  [string]$RepoPath = $PSScriptRoot,
+  [string]$RepoPath,
 
   [Parameter(Mandatory=$false)]
   [string]$Message
 )
 
-function Fail($msg) {{
+function Fail([string]$msg) {
   Write-Error $msg
   exit 1
-}}
+}
 
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {{
-  Fail "Git is not installed or not on PATH."
-}}
+function Find-GitRoot([string]$startPath) {
+  $p = (Resolve-Path -LiteralPath $startPath).Path
+  while ($true) {
+    if (Test-Path -LiteralPath (Join-Path $p ".git")) { return $p }
+    $parent = Split-Path -Path $p -Parent
+    if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $p) { break }
+    $p = $parent
+  }
+  return $null
+}
 
-if (-not (Test-Path -LiteralPath $RepoPath)) {{
-  Fail "RepoPath does not exist: $RepoPath"
-}}
+# Preconditions
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+  Fail "Git is not installed or not on PATH. Verify with: git --version"
+}
+
+# Resolve repo root
+if ([string]::IsNullOrWhiteSpace($RepoPath)) {
+  $RepoPath = Find-GitRoot -startPath $PSScriptRoot
+  if ([string]::IsNullOrWhiteSpace($RepoPath)) {
+    Fail "Unable to locate repository root (no .git found above: $PSScriptRoot). Provide -RepoPath explicitly."
+  }
+} else {
+  if (-not (Test-Path -LiteralPath $RepoPath)) {
+    Fail "RepoPath does not exist: $RepoPath"
+  }
+  $RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
+  if (-not (Test-Path -LiteralPath (Join-Path $RepoPath ".git"))) {
+    Fail "RepoPath is not a Git repository (missing .git): $RepoPath"
+  }
+}
 
 Set-Location -LiteralPath $RepoPath
 
-if (-not (Test-Path -LiteralPath ".git")) {{
-  Fail "RepoPath is not a Git repository."
-}}
+if (-not (Test-Path -LiteralPath "STATUS.md")) {
+  Fail "STATUS.md not found in repo root: $RepoPath"
+}
 
-if (-not (Test-Path -LiteralPath "STATUS.md")) {{
-  Fail "STATUS.md not found in repo root."
-}}
-
+# Detect changes
 $status = git status --porcelain -- STATUS.md
-if ([string]::IsNullOrWhiteSpace($status)) {{
+if ($LASTEXITCODE -ne 0) { Fail "Failed to read git status." }
+
+if ([string]::IsNullOrWhiteSpace($status)) {
   Write-Host "No changes detected in STATUS.md. Nothing to commit."
   exit 0
-}}
+}
 
+# Stage
 git add -- STATUS.md
-if ($LASTEXITCODE -ne 0) {{ Fail "git add failed." }}
+if ($LASTEXITCODE -ne 0) { Fail "git add failed." }
 
-if ([string]::IsNullOrWhiteSpace($Message)) {{
+# Commit message
+if ([string]::IsNullOrWhiteSpace($Message)) {
   $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
   $Message = "Status update ($ts)"
-}}
+}
 
 git commit -m $Message -- STATUS.md
-if ($LASTEXITCODE -ne 0) {{ Fail "git commit failed." }}
+if ($LASTEXITCODE -ne 0) { Fail "git commit failed." }
 
+# Push current branch
 $branch = (git rev-parse --abbrev-ref HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) { Fail "Unable to determine current branch." }
+
 git push origin $branch
-if ($LASTEXITCODE -ne 0) {{ Fail "git push failed." }}
+if ($LASTEXITCODE -ne 0) { Fail "git push failed." }
 
 Write-Host "Success: STATUS.md committed and pushed to origin/$branch"
