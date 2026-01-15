@@ -135,25 +135,21 @@ repo_root/
 
 ---
 
+After reviewing this specification, also review **`STATUS.md`** for the current completion state and next actions for this toolchain.
+
 
 ---
 
-## Repository Orientation (Required Reading)
+## AI Collaboration Hint (Author Preference)
 
-After reviewing this document, **also review the following two files** to fully understand how this repository is intended to be used and evolved:
+When assisting with this repository, the author prefers **prompt-style documents** like this one to be *created, refined, and extended proactively*.
 
-- **README.md** — Usage, workflow, and helper scripts  
-  https://github.com/tstandke/AndroidDev_ToolChain/blob/main/README.md
+Specifically:
+- When a new workflow, tool, or recurring process emerges, **propose a structured prompt or companion document** (similar to `Project_Prompt.md`, `STATUS.md`, or helper scripts).
+- Favor **explicit, reusable prompts** over ad-hoc explanations.
+- When in doubt, suggest creating a small, focused Markdown file plus a narrow PowerShell update helper.
 
-- **FILE_INDEX.md** — Authoritative map of repository structure, file roles, and update rules  
-  https://github.com/tstandke/AndroidDev_ToolChain/blob/main/FILE_INDEX.md
-
-These documents are part of the canonical documentation spine:
-- `Project_Prompt.md` defines intent and decisions
-- `README.md` defines usage and operational workflow
-- `FILE_INDEX.md` defines structure and purpose
-
-AI assistants should treat all three together as the source of truth.
+This approach significantly improves long-term maintainability and reuse.
 
 
 ## 9. Lessons Learned / FAQ
@@ -161,4 +157,6 @@ AI assistants should treat all three together as the source of truth.
 - CLI builds must succeed before proceeding.
 - Treat signing keys as production secrets.
 - Document failures immediately.
+
+Note for AI assistants: After reading this document, also review `README.md` in the same repository for operational usage instructions and helper scripts.
 
