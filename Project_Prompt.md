@@ -1,5 +1,4 @@
 # AndroidDev ToolChain — Project Prompt & Reproduction Guide
-# TEST
 
 ## 1. Purpose (Why this document exists)
 This document is the **single authoritative prompt** that can be handed to an AI assistant (or engineer) to:
