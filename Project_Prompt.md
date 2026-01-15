@@ -156,6 +156,7 @@ repo_root/
   Project_Prompt.md
   README.md
   FILE_INDEX.md
+  STATUS.md
 ```
 
 ---
