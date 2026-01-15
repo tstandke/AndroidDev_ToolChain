@@ -14,6 +14,31 @@ It is intentionally concise, modular, and update-friendly.
 This project defines a **Windows-based Android development toolchain** suitable for building, running, testing, signing, and releasing Android applications. It standardizes installation and configuration of **Git/GitHub**, **Android Studio + Android SDK**, **JDK**, **Gradle**, **device/emulator workflows**, and (when applicable) **Flutter** and **Firebase/GCP** integration. It also defines verification commands, environment validation, secure credential handling (keystores, tokens), and CI/CD via GitHub Actions, so the toolchain can be reproduced deterministically on new machines.
 
 ---
+---
+
+## Repository Navigation (Required Reading)
+
+This document (`Project_Prompt.md`) is the **entry point** for understanding and reproducing this repository.
+
+After reading it, **also review the following files** to fully understand usage, structure, and current completion state:
+
+- **README.md** — usage, workflow, and helper scripts  
+  https://github.com/tstandke/AndroidDev_ToolChain/blob/main/README.md
+
+- **FILE_INDEX.md** — authoritative map of repository contents, file roles, and update rules  
+  https://github.com/tstandke/AndroidDev_ToolChain/blob/main/FILE_INDEX.md
+
+- **STATUS.md** — current completion state, verification results, blockers, and next actions  
+  https://github.com/tstandke/AndroidDev_ToolChain/blob/main/STATUS.md
+
+Together, these files form the **canonical documentation spine**:
+1. `Project_Prompt.md` — intent, pinned decisions, and reproduction steps
+2. `README.md` — operational usage and helper tooling
+3. `FILE_INDEX.md` — structure, purpose, and update rules
+4. `STATUS.md` — what is actually done, and what is next
+
+AI assistants should treat this spine as the source of truth, and prefer updating it over repeating guidance in chat.
+
 
 ## 3. Technology Stack (Pinned Choices)
 
@@ -135,15 +160,19 @@ repo_root/
 
 ---
 
-After reviewing this specification, also review **`STATUS.md`** for the current completion state and next actions for this toolchain.
 
-## 9. Lessons Learned / FAQ
-- Always use Gradle wrapper.
-- CLI builds must succeed before proceeding.
-- Treat signing keys as production secrets.
-- Document failures immediately.
 
-Note for AI assistants: After reading this document, also review `README.md` in the same repository for operational usage instructions and helper scripts.
+---
+
+## AI Collaboration Hint (Author Preference)
+
+When assisting with this repository, the author prefers **prompt-style documents** like this one to be *created, refined, and extended proactively*.
+
+Specifically:
+- When a new workflow, tool, or recurring process emerges, **propose a structured prompt or companion document** (similar to `Project_Prompt.md`, `STATUS.md`, or helper scripts).
+- Favor **explicit, reusable prompts** over ad-hoc explanations.
+- When in doubt, suggest creating a small, focused Markdown file plus a narrow PowerShell update helper.
+
 ---
 
 ## AI Maintenance Hint (Staleness Prevention)
@@ -151,11 +180,20 @@ Note for AI assistants: After reading this document, also review `README.md` in 
 When assisting with this repository, the AI should **actively watch for documentation drift**.
 
 Specifically:
-- If guidance, commands, or workflows are discussed that would change the *meaning or accuracy* of any canonical file (`Project_Prompt.md`, `README.md`, `FILE_INDEX.md`, `STATUS.md`), **proactively offer to update the relevant file**.
+- If guidance, commands, or workflows are discussed that would change the meaning or accuracy of any canonical file (`Project_Prompt.md`, `README.md`, `FILE_INDEX.md`, `STATUS.md`), **proactively offer to update the relevant file**.
 - Prefer **updating the source document** over repeating or paraphrasing instructions in chat.
 - When changes are operational or machine-specific, propose updates to **`STATUS.md`**.
 - When changes are structural or conceptual, propose updates to **`Project_Prompt.md`** or **`FILE_INDEX.md`**.
 - When changes affect usage or helper scripts, propose updates to **`README.md`**.
 
 The goal is to keep the repository as the **living source of truth**, minimizing stale guidance across sessions.
+
+
+## 9. Lessons Learned / FAQ
+- Always use Gradle wrapper.
+- CLI builds must succeed before proceeding.
+- Treat signing keys as production secrets.
+- Document failures immediately.
+
+
 
