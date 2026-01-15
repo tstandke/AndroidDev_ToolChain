@@ -137,21 +137,6 @@ repo_root/
 
 After reviewing this specification, also review **`STATUS.md`** for the current completion state and next actions for this toolchain.
 
-
----
-
-## AI Collaboration Hint (Author Preference)
-
-When assisting with this repository, the author prefers **prompt-style documents** like this one to be *created, refined, and extended proactively*.
-
-Specifically:
-- When a new workflow, tool, or recurring process emerges, **propose a structured prompt or companion document** (similar to `Project_Prompt.md`, `STATUS.md`, or helper scripts).
-- Favor **explicit, reusable prompts** over ad-hoc explanations.
-- When in doubt, suggest creating a small, focused Markdown file plus a narrow PowerShell update helper.
-
-This approach significantly improves long-term maintainability and reuse.
-
-
 ## 9. Lessons Learned / FAQ
 - Always use Gradle wrapper.
 - CLI builds must succeed before proceeding.
@@ -159,4 +144,18 @@ This approach significantly improves long-term maintainability and reuse.
 - Document failures immediately.
 
 Note for AI assistants: After reading this document, also review `README.md` in the same repository for operational usage instructions and helper scripts.
+---
+
+## AI Maintenance Hint (Staleness Prevention)
+
+When assisting with this repository, the AI should **actively watch for documentation drift**.
+
+Specifically:
+- If guidance, commands, or workflows are discussed that would change the *meaning or accuracy* of any canonical file (`Project_Prompt.md`, `README.md`, `FILE_INDEX.md`, `STATUS.md`), **proactively offer to update the relevant file**.
+- Prefer **updating the source document** over repeating or paraphrasing instructions in chat.
+- When changes are operational or machine-specific, propose updates to **`STATUS.md`**.
+- When changes are structural or conceptual, propose updates to **`Project_Prompt.md`** or **`FILE_INDEX.md`**.
+- When changes affect usage or helper scripts, propose updates to **`README.md`**.
+
+The goal is to keep the repository as the **living source of truth**, minimizing stale guidance across sessions.
 
