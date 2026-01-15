@@ -31,6 +31,11 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 ### Source Control
 
+- GitHub identity — **DONE**
+  - Username: `tstandke`
+  - Account email: `standket@gmail.com`
+  - Credential storage: **NordPass** (password/token vault)
+
 - Git for Windows — **DONE**  
   - Verify: `git --version`  
   - Result: `2.52.0.windows.1`
@@ -40,7 +45,7 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
   - Result: authenticated as `tstandke`
 
 - Repo helper scripts (`GitUpdate-*.ps1`) — **DONE**  
-  - Verified: README, Project_Prompt, FILE_INDEX update scripts
+  - Verified: README, Project_Prompt, FILE_INDEX, STATUS update scripts (auto-detect repo root)
 
 ---
 
