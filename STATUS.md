@@ -1,5 +1,4 @@
 # STATUS — Toolchain Progress & Next Actions
-# TEST
 
 This file records the **current, machine-specific status** of the Android development toolchain.
 It complements (but does not replace) the specification in `Project_Prompt.md`.
