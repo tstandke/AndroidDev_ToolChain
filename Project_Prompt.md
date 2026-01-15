@@ -1,146 +1,251 @@
-# AndroidDev ToolChain — Project Prompt & Reproduction Guide
-#  TESTING THIS CHANGE
+# Project Prompt & Reproduction Guide
 
 ## 1. Purpose (Why this document exists)
 This document is the **single authoritative prompt** that can be handed to an AI assistant (or engineer) to:
-- Recreate an Android application development workstation from scratch (Windows-first)
+- Recreate this project from scratch
 - Maintain architectural, security, and tooling consistency
-- Avoid rediscovering prior decisions and configuration pitfalls
+- Avoid rediscovering prior decisions
 
 It is intentionally concise, modular, and update-friendly.
 
 ---
 
 ## 2. One-Paragraph System Summary (High-Level)
-This project defines a **Windows-based Android development toolchain** suitable for building, running, testing, signing, and releasing Android applications. It standardizes installation and configuration of **Git/GitHub**, **Android Studio + Android SDK**, **JDK**, **Gradle**, **device/emulator workflows**, and (when applicable) **Flutter** and **Firebase/GCP** integration. It also defines verification commands, environment validation, secure credential handling (keystores, tokens), and CI/CD via GitHub Actions, so the toolchain can be reproduced deterministically on new machines.
+This project is a **Flutter mobile application** backed by **Google Cloud Platform** that implements **modern authentication, authorization, and biometric re-authentication**. Authentication uses **Google Sign-In via Firebase Authentication**. Authorization is enforced server-side via **Cloud Run (FastAPI)** using **Firestore** as the source of truth. The app uses **biometrics** only as a local unlock gate, never as an identity authority. Source control is managed via **GitHub**.
 
 ---
 
 ## 3. Technology Stack (Pinned Choices)
+### Client
+- Flutter (stable channel)
+- firebase_core
+- firebase_auth
+- google_sign_in
+- local_auth
+- flutter_secure_storage
+- go_router (preferred; use Navigator only if explicitly required)
 
-### Workstation Platform
-- Windows 11 (primary target)
-- Windows Terminal (preferred)
-- PowerShell 7 (preferred) or Windows PowerShell 5.1 (acceptable)
+### Backend
+- Google Cloud Run
+- Python FastAPI
+- Firebase Admin SDK
+- Firestore (Native mode)
+
+### Platform Services
+- Google Cloud Platform
+- Firebase Authentication
+- Firestore
 
 ### Source Control
-- Git for Windows (installed and on PATH)
-- GitHub (public repos allowed; private repos optional)
-- GitHub CLI `gh` (recommended)
-
-### Android Tooling
-- Android Studio (stable channel)
-- Android SDK Platform Tools (adb/fastboot)
-- Android SDK Build Tools (pinned per project)
-- Android Emulator (AVD Manager via Android Studio)
-- Gradle (via wrapper; do not install global Gradle unless explicitly required)
-
-### Java Tooling
-- JDK (prefer the JDK bundled with Android Studio unless a project requires a specific external JDK)
-- JAVA_HOME set only if required by tooling; prefer Android Studio embedded JDK when possible
+- GitHub (single mono-repo)
 
 ---
 
-## 4. Git Tooling (Source Control Foundation)
-
-### What Git Is and Why It Is Required
-Git is a **distributed version control system** used to track changes to files over time. In this toolchain, Git serves as the foundational mechanism for recording all source code and documentation changes, enabling safe experimentation via branches, supporting reproducibility by preserving full history, and enabling collaboration and review workflows.
-
-### Git vs GitHub
-- **Git** is the version control tool installed on your machine.
-- **GitHub** is a hosted service that stores Git repositories and adds collaboration, access control, and automation.
-
-Git must be installed first. GitHub access is layered on top.
-
-### 4.1 Git Installation Check
-Command:
-```
-git --version
-```
-
-Expected result:
-```
-git version 2.x.y.windows.z
-```
-
-### 4.2 Git Installation (If Missing)
-Install **Git for Windows** using the official installer. After installation, close and reopen PowerShell, then re-run `git --version`.
-
-### 4.3 GitHub CLI (`gh`) Installation Check
-Command:
-```
-gh --version
-```
-
-If not recognized, install using:
-```
-winget install --id GitHub.cli
-```
-
-Close and reopen PowerShell after installation.
-
-### 4.4 GitHub Authentication
-Authenticate once per machine:
-```
-gh auth login
-```
-
-Verify:
-```
-gh auth status
-```
-
-Tooling is considered complete only when `git --version`, `gh --version`, and `gh auth status` all succeed.
+## 4. Security Model (Non-Negotiable Principles)
+1. **Client is never trusted**
+2. All authorization decisions occur **server-side**
+3. Firebase ID tokens (JWTs) are validated on every privileged request
+4. Biometrics are used only for **local re-authentication**, not identity
+5. No secrets or tokens are stored in plaintext
 
 ---
 
-## 5. Security Model (Non-Negotiable Principles)
-1. Secrets are never committed.
-2. Prefer least-privilege credentials.
-3. Use secure credential storage.
-4. Release signing keys are protected and backed up.
-5. CI/CD secrets are managed via GitHub Secrets.
+## 5. Authentication Flow (Canonical)
+1. User signs in via Google Sign-In
+2. Google credentials exchanged for Firebase Auth session
+3. Client obtains Firebase ID token
+4. Token is sent to backend
+5. Backend validates token and checks authorization status
 
 ---
 
-## 6. Canonical Toolchain Setup Flow
-1. Install Git and GitHub CLI
-2. Install Android Studio and SDKs
-3. Configure environment
-4. Verify emulator/device workflow
-5. Scaffold projects
-6. Configure signing
-7. Configure CI/CD
+## 6. Authorization Model
+### Firestore Collections
+- users/{uid}
+  - email
+  - displayName
+  - roles: ["admin" | "user" | "viewer"]
+  - status: approved | pending | denied
+
+- access_requests/{requestId}
+  - uid
+  - email
+  - createdAt
+  - status
+
+Authorization logic is enforced:
+- Primarily in backend APIs
+- Secondarily via Firestore Security Rules
 
 ---
 
-## 7. Validation Commands (Minimum Acceptance)
-- `git --version`
-- `gh --version`
-- `adb version`
-- `adb devices`
-- `./gradlew assembleDebug`
+## 7. Biometric Usage Policy
+- Required after first successful login
+- Required on app relaunch (local unlock gate)
+- Optional for sensitive operations (step-up auth)
+- Never substitutes for server authorization
 
 ---
 
-## 8. Repository Structure
+## 8. Repository Structure (Required)
 ```
 repo_root/
-  docs/
-  scripts/
-  templates/
-  Project_Prompt.md
+  app/          # Flutter application
+  backend/      # Cloud Run FastAPI service
+  infra/        # Infrastructure (future Terraform/IaC)
+  docs/         # Supplemental documentation
   README.md
-  FILE_INDEX.md
 ```
 
 ---
 
-## 9. Lessons Learned / FAQ
-- Always use Gradle wrapper.
-- CLI builds must succeed before proceeding.
-- Treat signing keys as production secrets.
-- Document failures immediately.
+## 9. Flutter App Structure
+```
+app/lib/
+  main.dart
+  core/
+    auth/
+    routing/
+    storage/
+  features/
+    splash/
+    login/
+    home/
+    admin_requests/
+```
 
-Note for AI assistants: After reading this document, also review `README.md` in the same repository for operational usage instructions and helper scripts.
+---
+
+## 10. Backend Responsibilities
+- Verify Firebase ID tokens on every request
+- Enforce role-based access using Firestore as source of truth
+- Expose endpoints (minimum set):
+  - GET /me
+  - POST /access-request
+  - GET /admin/requests
+  - POST /admin/requests/{id}/approve
+
+---
+
+## 11. Explicit Out-of-Scope Items
+- Password authentication
+- Client-side role enforcement as an authority
+- Storing credentials locally (plaintext or otherwise)
+- Anonymous authentication
+
+---
+
+## 12. Change Log (Keep Short)
+- 2026-01-15: Initial architecture established (Flutter + Firebase Auth + Cloud Run authz + biometrics gate)
+
+---
+
+## 13. Prompt Usage Instructions
+When providing this document to an AI assistant, prepend the following directive:
+
+> Use this document as the authoritative specification. Do not invent alternate architectures. Ask questions only if a decision is missing or ambiguous. Update this document whenever a decision changes.
+
+---
+
+## 14. Maintenance Rules
+- Prefer **editing existing sections** over adding new ones
+- If a decision changes, update it here and nowhere else
+- Keep the one-paragraph summary current
+
+---
+
+## 15. Lessons Learned / FAQ (Decision Guardrails)
+This section captures **practical lessons learned** and common failure modes so future iterations (human or AI) avoid repeating mistakes.
+
+### Q1. Why not rely on client-side authorization checks?
+**Lesson:** Client-side checks are trivially bypassed.  
+**Decision:** All authorization logic must be enforced server-side. The client may *display* UI conditionally, but the backend is the final authority.
+
+---
+
+### Q2. Why is Firebase Authentication used instead of custom OAuth handling?
+**Lesson:** Rolling your own OAuth or token handling increases attack surface and maintenance cost.  
+**Decision:** Use Firebase Authentication as the identity provider and validate Firebase-issued JWTs on the backend.
+
+---
+
+### Q3. Why are biometrics not treated as authentication?
+**Lesson:** Biometrics authenticate a *device user*, not an *identity*.  
+**Decision:** Biometrics are used only as a **local re-authentication gate** after a valid cloud-based login has already occurred.
+
+---
+
+### Q4. Why is Firestore the authorization source of truth?
+**Lesson:** Authorization state must be centrally managed and auditable.  
+**Decision:** Firestore holds user roles and approval status. Backend services query Firestore to make authorization decisions.
+
+---
+
+### Q5. Why verify the Firebase ID token on every backend request?
+**Lesson:** Cached or assumed identity leads to privilege escalation bugs.  
+**Decision:** Every privileged backend endpoint must verify the Firebase ID token and re-evaluate authorization.
+
+---
+
+### Q6. Why avoid storing tokens or credentials locally?
+**Lesson:** Local storage is a common exfiltration vector on compromised devices.  
+**Decision:** Rely on Firebase session management. Store only minimal, non-sensitive state (e.g., "hasCompletedFirstAuth").
+
+---
+
+### Q7. Why separate authentication from authorization explicitly?
+**Lesson:** Conflating identity with permission leads to unclear security boundaries.  
+**Decision:** Authentication proves *who the user is*. Authorization determines *what the user can do*. These concerns are handled independently.
+
+---
+
+### Q8. What is the most common architectural mistake to avoid?
+**Lesson:** Letting early convenience dictate long-term security posture.  
+**Decision:** Favor correctness, auditability, and server-side enforcement over short-term development speed.
+
+---
+
+### Q9. When adding new features, what must be checked first?
+**Lesson:** Feature creep often bypasses original security assumptions.  
+**Decision Checklist:**
+- Does this require a new backend endpoint?
+- Does it need a role or permission?
+- Is server-side enforcement implemented?
+- Does the prompt document need updating?
+
+---
+
+### Q10. When should this section be updated?
+**Lesson:** Lessons lose value if not captured immediately.  
+**Decision:** Add an entry here whenever:
+- A bug reveals a flawed assumption
+- A security concern is discovered
+- A design decision is reversed
+- An AI produces an incorrect but plausible solution
+
+---
+
+### Q11. How should new lessons be categorized?
+**Lesson:** Unstructured lessons become noise over time.  
+**Decision:** Every new lesson must be written using **one of two explicit patterns**:
+
+1. **Never Do This**
+   - Used for actions that create severe security, data-loss, or architectural risk
+   - Examples: trusting client-side auth, storing tokens locally, bypassing backend checks
+
+2. **Tempting but Wrong**
+   - Used for approaches that appear reasonable or faster, but violate long-term correctness or security
+   - Examples: relying on cached authorization, skipping token verification for "internal" endpoints
+
+This categorization is mandatory to preserve clarity and prevent future regression.
+---
+
+### Repository Index Reference
+
+After reviewing this document, **also review `FILE_INDEX.md`** for a stable, authoritative map of all files and directories in this repository, including their purpose and update rules.
+
+- FILE_INDEX.md (repository structure and intent):
+  https://github.com/tstandke/AndroidDev_ToolChain/blob/main/FILE_INDEX.md
+
+This index is intended to prevent ambiguity about which files are authoritative, which are safe to edit, and how the repository is meant to evolve over time.
 
