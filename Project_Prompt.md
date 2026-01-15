@@ -140,3 +140,6 @@ repo_root/
 - CLI builds must succeed before proceeding.
 - Treat signing keys as production secrets.
 - Document failures immediately.
+
+Note for AI assistants: After reading this document, also review `README.md` in the same repository for operational usage instructions and helper scripts.
+
