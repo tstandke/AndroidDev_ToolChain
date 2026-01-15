@@ -1,6 +1,6 @@
 # AndroidDev ToolChain
 
-This repository is the authoritative reference for documenting and reproducing an Android application development toolchain (Windows-first).
+This repository is the authoritative reference for documenting and reproducing an Android application development toolchain (Windows-first).  CHANGE
 
 ## How to use this repository with an AI assistant (LLM)
 
