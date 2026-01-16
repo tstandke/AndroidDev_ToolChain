@@ -55,6 +55,9 @@ It complements (but does not replace) the GitHub file tree.
 - `6_2_Flutter_Toolchain_Installation.md`
   - Step-by-step procedure for verifying, upgrading, or installing the Flutter SDK as part of Section 6.2 of the canonical toolchain setup flow.
 
+- `6_3_Android_Toolchain_Installation.md`
+  - Step-by-step procedure for installing and verifying Android Studio, required Android SDK components, emulator (AVD), and `adb` connectivity as part of Section 6.3 of the canonical toolchain setup flow.
+
 ---
 
 ## Update Rules
