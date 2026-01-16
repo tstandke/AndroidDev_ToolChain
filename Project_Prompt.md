@@ -177,14 +177,85 @@ This file is the entry point. The following files must be consulted:
 
 ## 5. AI Collaboration Rules
 
-When this document is provided to an AI assistant:
+When this document is provided to an AI assistant, the AI must operate as a **state-aware collaborator**, not a stateless chatbot.
 
-- Treat this file as **source of truth**
-- Read linked documents before proposing actions
-- Prefer updating canonical files over chat-only advice
-- Detect and warn about documentation drift
-- Offer to update `STATUS.md` when steps are completed
-- Propose helper scripts or structured prompts when useful
+### 5.1 General Rules
+
+- Treat this file (`Project_Prompt.md`) as the **source of truth**
+- Read all linked canonical documents before proposing actions:
+  - `README.md`
+  - `FILE_INDEX.md`
+  - `STATUS.md`
+- Follow the canonical toolchain flow in Section 6
+- Prefer updating canonical repository files over chat-only advice
+- Propose structured prompts, helper scripts, or documentation when reuse is likely
+
+---
+
+### 5.2 Documentation Drift Watch (Required)
+
+The AI must actively monitor for **documentation drift** and explicitly prompt when canonical files should be updated.
+
+#### Triggers for updating `STATUS.md` (current state)
+
+Prompt to update `STATUS.md` when any of the following occur:
+
+- A tool is installed, upgraded, removed, or reconfigured  
+  (e.g., Flutter, Android Studio, SDKs, Git, gh)
+- A verification command is run with meaningful output  
+  (e.g., `flutter doctor`, `adb devices`, build success/failure)
+- A step in Section 6 transitions state  
+  (`NOT STARTED` → `IN PROGRESS` → `DONE`)
+- Work is performed on a different machine, OS, or shell environment
+
+---
+
+#### Triggers for updating `FILE_INDEX.md` (repository inventory)
+
+Prompt to update `FILE_INDEX.md` when any of the following occur:
+
+- A new file or directory is added that is intended to persist
+- Any file is renamed, moved, or deleted
+- A new canonical document or repeat-use guide is created
+- A new step guide is added under `docs/`
+  (e.g., `6_3_*.md`, `auth/*.md`, `ci/*.md`)
+
+---
+
+#### Triggers for updating `README.md` (repo usage)
+
+Prompt to update `README.md` when any of the following occur:
+
+- The workflow for using the repo with an AI assistant changes
+- Entry-point expectations change (e.g., Project_Prompt usage)
+- Directory conventions change (`docs/`, `scripts/`, etc.)
+- A new user-facing setup or operational workflow is introduced
+
+---
+
+### 5.3 Prompting Behavior Requirements
+
+When a trigger condition is met, the AI must explicitly state:
+
+- **Which file** should be updated (`STATUS.md`, `FILE_INDEX.md`, or `README.md`)
+- **Why** the update is needed (which trigger was hit)
+- **What the minimal change** should be
+
+Additional rules:
+
+- Prefer **minimal, single-purpose commits**
+- If uncertainty exists, ask for confirmation before updating
+- Do not allow canonical documents to silently drift out of sync
+
+---
+
+### 5.4 Priority Rule
+
+If documentation and implementation disagree:
+
+> **Update the documentation first, then proceed with implementation.**
+
+This ensures the repository remains resumable and deterministic across sessions and AI assistants.
 
 ---
 
