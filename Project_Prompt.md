@@ -8,12 +8,47 @@ It is explicitly designed to be handed to an AI assistant (LLM) at the start of 
 
 ---
 
-## 2. One-Paragraph System Summary
+## 2. System Summary & Canonical Reference Application
 
-This project defines a **Windows-first, Flutter-based mobile application toolchain**, targeting **Android initially** and **iOS in the future**, with **Firebase-backed authentication**, **server-side authorization**, and **Google Cloud Platform (GCP)** infrastructure.  
-The repository encodes both the **intended system design** and the **actual current state**, enabling reproducible setup, controlled iteration, and AI-assisted continuation.
+This project defines a **Windows-first, Flutter-based mobile application toolchain**, targeting **Android initially** and **iOS in the future**, with **Firebase-backed authentication**, **server-side authorization**, **local biometric session unlock**, and **Google Cloud Platform (GCP)** infrastructure.
+
+The repository encodes both:
+
+- The **intended system design** (what the toolchain and application stack *should be*), and  
+- The **actual current state** (what is installed, verified, and known to work on a specific machine),
+
+so that setup, validation, and continuation can occur **deterministically**, without rediscovering prior decisions.
+
+### Canonical Reference Application (Toolchain Smoke Test)
+
+This repository includes a **minimal, canonical Flutter reference application** located at:
+
+- `reference_app/`
+
+The reference application exists solely to **validate the toolchain end-to-end** and to detect when **toolchain updates** (Flutter, Android SDK, Gradle, Android Studio, Firebase tooling) introduce breaking changes.
+
+The reference application is intentionally minimal and is used to validate:
+
+- Flutter → Android build execution (`flutter run`)
+- Android emulator and/or physical device deployment
+- Firebase Authentication (Google Sign-In)
+- Server-side authorization enforcement (post-authentication)
+- Local biometric unlock for session convenience  
+  (biometrics are **never** an identity authority)
+
+### Non-Goals
+
+The reference application is **not** intended to:
+
+- Become a production application
+- Accumulate business logic or domain features
+- Serve as a UI/UX exemplar
+- Replace real application repositories
+
+Its sole purpose is to make the toolchain **provable, repeatable, and diagnosable** across machines, developers, and AI-assisted sessions.
 
 ---
+
 
 ## 3. Technology Stack (Authoritative & Pinned)
 
