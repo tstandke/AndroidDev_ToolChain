@@ -117,18 +117,17 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 - Flutter reports missing Visual Studio for Windows desktop builds.
   - This is **not required** for Android or future iOS targets.
   - Intentionally not installed at this time.
+- During first reference app run, Android emulator temporarily appeared as `adb offline`.
+  - Resolved via `adb kill-server` / `adb start-server`
+  - Emulator resumed normal operation (`device` state) and build succeeded
 
 ---
 
 ## Next Actions (Priority Order)
 
-1. Explicitly verify `adb`:
-   - `adb --version`
-   - `adb devices`
-2. Confirm emulator start (manual or via Flutter)
-3. Run first Flutter Android debug build:
-   - `flutter run`
-4. Record results and advance to Section 6.4
+1. Begin Section 6.5 — Identity & Authentication Setup
+   - Implement Firebase Authentication (Google Sign-In) in `reference_app`
+2. Record authentication verification results in `STATUS.md`
 
 ---
 
