@@ -33,7 +33,7 @@ Proceed to **6.5.1 Firebase Project Setup**.
 1. Create or select a Firebase project.
 2. Add an **Android app** to the project.
    - Package name must match `applicationId`
-     (default: `com.example.reference_app`).
+     (default: `com.toolchain.reference_app`).
 3. Download `google-services.json` and place it at:
    - `reference_app/android/app/google-services.json`
 
