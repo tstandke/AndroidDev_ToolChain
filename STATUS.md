@@ -95,8 +95,14 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
   - Source: Android Studio bundled JBR
   - Version: OpenJDK 17.0.7
 
-- Gradle wrapper verification — **NOT STARTED**
-- Flutter Android debug run (`flutter run`) — **NOT STARTED**
+- Gradle wrapper verification — **DONE**
+  - Verified implicitly via successful `flutter run`
+  - Gradle tasks executed: `assembleDebug`
+
+- Flutter Android debug run (`flutter run`) — **DONE**
+  - Target: Android emulator (`emulator-5554`)
+  - Result: APK built, installed, and launched successfully
+  - Debug console active; hot reload available
 
 ---
 
