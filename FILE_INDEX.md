@@ -39,6 +39,16 @@ It complements (but does not replace) the GitHub file tree.
   - Contains narrow “safe default” Git update helpers (`GitUpdate-*.ps1`)
   - Scripts here should be referenced from `README.md` and/or `Project_Prompt.md`
 
+- `reference_app/`
+  - Canonical Flutter **reference application** used to validate the toolchain end-to-end
+  - Exists solely as a **toolchain smoke test**
+  - Implements minimal:
+    - Firebase Authentication (Google Sign-In)
+    - Server-side authorization checks
+    - Local biometric session unlock
+  - Not intended to become a production application
+  - Used by Section 6.4 of `Project_Prompt.md`
+
 - `docs/` (planned)
   - Intended location for detailed toolchain documentation
   - Examples: Android Studio setup, SDK verification, emulator workflows
