@@ -1,6 +1,6 @@
 # STATUS — Toolchain Progress & Next Actions
 
-This file records the **current, machine-specific status** of the Android development toolchain.
+This file records the **current, machine-specific status** of the Android / Flutter development toolchain.
 It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 **Rule of thumb**
@@ -11,10 +11,10 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 ## Snapshot
 
-- **Last updated:** 2026-01-15 20:53:16
-- **Machine:** Tim-PC (edit as needed)
+- **Last updated:** 2026-01-16
+- **Machine:** Tim-PC
 - **Primary shell:** PowerShell
-- **OS:** Windows 11
+- **OS:** Windows 11 Home (25H2)
 
 ---
 
@@ -34,34 +34,69 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 - GitHub identity — **DONE**
   - Username: `tstandke`
   - Account email: `standket@gmail.com`
-  - Credential storage: **NordPass** (password/token vault)
+  - Credential storage: **NordPass** (password / token vault)
 
-- Git for Windows — **DONE**  
-  - Verify: `git --version`  
+- Git for Windows — **DONE**
+  - Verify: `git --version`
   - Result: `2.52.0.windows.1`
 
-- GitHub CLI (`gh`) — **DONE**  
-  - Verify: `gh auth status`  
+- GitHub CLI (`gh`) — **DONE**
+  - Verify: `gh auth status`
   - Result: authenticated as `tstandke`
 
-- Repo helper scripts (`GitUpdate-*.ps1`) — **DONE**  
-  - Verified: README, Project_Prompt, FILE_INDEX, STATUS update scripts (auto-detect repo root)
+- Repo helper scripts (`GitUpdate-*.ps1`) — **DONE**
+  - Verified: README, Project_Prompt, FILE_INDEX, STATUS update scripts
+  - Note: scripts auto-detect repo root and run correctly from `/scripts`
+
+---
+
+### Flutter Toolchain
+
+- Flutter SDK — **DONE**
+  - Path: Existing installation verified and updated in place
+  - Action: `flutter channel stable`, `flutter upgrade`
+  - Verify: `flutter --version`
+  - Result: `3.38.7`, stable channel
+  - Install path: `C:\src\flutter`
+
+- Flutter Doctor — **DONE**
+  - Verify: `flutter doctor`
+  - Result: Flutter SDK OK
+  - Notes:
+    - Android tooling detected and licensed
+    - Visual Studio missing (Windows desktop apps only; **out of scope**)
 
 ---
 
 ### Android Tooling
 
-- Android Studio (stable) — **NOT STARTED**
-- Android SDK Platform Tools — **NOT STARTED**
-- Android Emulator (AVD) — **NOT STARTED**
-- Physical device (USB debugging) — **NOT STARTED**
+- Android Studio (stable) — **DONE**
+  - Detected via Flutter Doctor
+  - Bundled JDK in use
+
+- Android SDK Platform Tools — **DONE**
+  - SDK path: `C:\Users\Tim\AppData\Local\Android\sdk`
+  - Platforms: `android-36`
+  - Build-tools: `36.0.0`
+  - Licenses: all accepted
+
+- Android Emulator (AVD) — **DONE**
+  - Emulator present (verified via Flutter Doctor)
+
+- Physical device (USB debugging) — **IN PROGRESS**
+  - Devices detected via Flutter Doctor
+  - Explicit `adb devices` verification pending
 
 ---
 
 ### Build System
 
+- Java (JDK) — **DONE**
+  - Source: Android Studio bundled JBR
+  - Version: OpenJDK 17.0.7
+
 - Gradle wrapper verification — **NOT STARTED**
-- Debug build (`assembleDebug`) — **NOT STARTED**
+- Flutter Android debug run (`flutter run`) — **NOT STARTED**
 
 ---
 
@@ -73,16 +108,21 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 ## Known Issues / Notes
 
-- None recorded yet.
+- Flutter reports missing Visual Studio for Windows desktop builds.
+  - This is **not required** for Android or future iOS targets.
+  - Intentionally not installed at this time.
 
 ---
 
 ## Next Actions (Priority Order)
 
-1. Install Android Studio (stable channel)
-2. Install required Android SDK components
-3. Verify `adb` and emulator startup
-4. Create first sample project and run debug build
+1. Explicitly verify `adb`:
+   - `adb --version`
+   - `adb devices`
+2. Confirm emulator start (manual or via Flutter)
+3. Run first Flutter Android debug build:
+   - `flutter run`
+4. Record results and advance to Section 6.4
 
 ---
 
@@ -90,4 +130,4 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 - Update this file whenever a status changes
 - Keep entries concise and factual
-- Do not embed long logs; summarize results instead
+- Summarize outcomes; do not embed long logs
