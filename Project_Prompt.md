@@ -1,200 +1,301 @@
-# AndroidDev ToolChain — Project Prompt & Reproduction Guide
+# Project_Prompt — Android / Flutter Toolchain (Authoritative Specification)
 
-## 1. Purpose (Why this document exists)
-This document is the **single authoritative prompt** that can be handed to an AI assistant (or engineer) to:
-- Recreate an Android application development workstation from scratch (Windows-first)
-- Maintain architectural, security, and tooling consistency
-- Avoid rediscovering prior decisions and configuration pitfalls
+## 1. Purpose
 
-It is intentionally concise, modular, and update-friendly.
+This document is the **authoritative specification** for recreating, extending, and resuming work on this repository without rediscovering past decisions.
+
+It is explicitly designed to be handed to an AI assistant (LLM) at the start of a new session so that work can continue deterministically and correctly.
 
 ---
 
-## 2. One-Paragraph System Summary (High-Level)
-This project defines a **Windows-based Android development toolchain** suitable for building, running, testing, signing, and releasing Android applications. It standardizes installation and configuration of **Git/GitHub**, **Android Studio + Android SDK**, **JDK**, **Gradle**, **device/emulator workflows**, and (when applicable) **Flutter** and **Firebase/GCP** integration. It also defines verification commands, environment validation, secure credential handling (keystores, tokens), and CI/CD via GitHub Actions, so the toolchain can be reproduced deterministically on new machines.
+## 2. One-Paragraph System Summary
+
+This project defines a **Windows-first, Flutter-based mobile application toolchain**, targeting **Android initially** and **iOS in the future**, with **Firebase-backed authentication**, **server-side authorization**, and **Google Cloud Platform (GCP)** infrastructure.  
+The repository encodes both the **intended system design** and the **actual current state**, enabling reproducible setup, controlled iteration, and AI-assisted continuation.
 
 ---
+
+## 3. Technology Stack (Authoritative & Pinned)
+
+> This section defines the **complete, end-to-end toolchain** required to build, authenticate, authorize, and operate **cross-platform mobile applications**, with Android as the initial execution target and iOS as a future extension.  
+> Any deviation from this stack must be explicitly recorded.
+
+### 3.1 Workstation Platform
+
+- **Operating System:** Windows 11  
+- **Primary Shell:** PowerShell  
+- **Package Management:** winget (preferred), manual installers as required  
+- **Source Control Client:** Git for Windows  
+
 ---
 
-## Repository Navigation (Required Reading)
+### 3.2 Source Control & Repository Management
 
-This document (`Project_Prompt.md`) is the **entry point** for understanding and reproducing this repository.
+- **Git Provider:** GitHub  
+- **Git Identity:** recorded in `STATUS.md`  
+- **Credential Storage:** NordPass  
+- **Repo Update Discipline:**  
+  - Canonical files updated via narrow helper scripts in `/scripts`  
+  - One logical change per commit where feasible  
 
-After reading it, **also review the following files** to fully understand usage, structure, and current completion state:
+---
 
-- **README.md** — usage, workflow, and helper scripts  
+### 3.3 Flutter Development Tooling (REQUIRED)
+
+- **Flutter SDK**
+  - Stable channel
+  - Installed outside the project workspace
+  - Version recorded in `STATUS.md`
+- **Flutter Toolchain Verification**
+  - `flutter doctor`
+  - Android toolchain must report **no blocking issues**
+- **Flutter Project Model**
+  - Flutter is the primary application framework
+  - Platform-specific code (Android / iOS) is generated and managed by Flutter
+
+> **Principle:** Flutter is the application layer.  
+> Android and iOS tooling support Flutter; they are not the primary frameworks.
+
+---
+
+### 3.4 Android Development Tooling
+
+- **Android Studio:** Stable channel  
+- **Android SDK Components**
+  - SDK Platform(s)
+  - SDK Platform Tools (`adb`)
+  - Build Tools (version pinned per project)
+- **Android Emulator (AVD)**
+  - x86_64 system images
+  - Hardware acceleration enabled
+- **Physical Device Support**
+  - USB debugging enabled
+  - OEM USB drivers installed if required
+
+---
+
+### 3.5 Java / Build Tooling
+
+- **Java Development Kit (JDK)**
+  - Version required by pinned Android Gradle Plugin
+- **Gradle**
+  - Wrapper-based (`gradlew`)
+  - No reliance on system Gradle
+- **Build Verification**
+  - Android builds executed via Flutter
+  - `flutter run`, `flutter build apk`
+
+---
+
+### 3.6 Identity, Authentication, and Authorization (REQUIRED)
+
+#### Authentication — Client (Flutter)
+
+- **Firebase Authentication**
+  - Google Sign-In enabled
+  - Flutter Firebase Auth SDK
+- **Platform Configuration**
+  - `google-services.json` (Android)
+  - iOS configuration captured later
+- **Signing Certificates**
+  - Debug and release SHA-1 / SHA-256 fingerprints registered in Firebase
+
+#### Authentication — Server
+
+- **ID Token Verification**
+  - Firebase ID tokens verified server-side using Admin SDK
+  - No trust placed in client-side claims
+
+#### Authorization — Server-Side Enforcement
+
+- **Authorization Source of Truth**
+  - Centralized (e.g., Firestore roles / allowlists)
+- **Authorization Rules**
+  - Evaluated server-side after authentication
+  - Client UI must not determine access
+
+> **Rule:** Authentication proves identity.  
+> Authorization determines permission.  
+> Authorization is never enforced solely on the client.
+
+---
+
+### 3.7 Firebase & Google Cloud Platform
+
+- **Firebase Project**
+  - Created explicitly for the application
+  - Linked to a Google Cloud project
+- **Google Cloud Platform (GCP)**
+  - Required for:
+    - Firebase backend services
+    - Firestore
+    - Cloud Run / Functions (if used)
+    - App Check providers
+- **IAM & Service Accounts**
+  - Least-privilege access
+  - Ownership documented
+- **Secrets Management**
+  - Google Secret Manager (recommended)
+
+---
+
+### 3.8 App Attestation & Abuse Protection (Recommended)
+
+- **Firebase App Check**
+  - Provider: Play Integrity API (Android)
+- **Debug vs Release**
+  - Debug tokens permitted only in development
+  - Enforcement required for production
+
+---
+
+### 3.9 Supporting Developer Tooling
+
+- **Google Cloud SDK (`gcloud`)**
+- **Firebase CLI**
+- **FlutterFire CLI**
+
+---
+
+## 4. Repository Navigation (Required Reading)
+
+This file is the entry point. The following files must be consulted:
+
+- **README.md**  
+  Orientation and instructions for AI-assisted usage  
   https://github.com/tstandke/AndroidDev_ToolChain/blob/main/README.md
 
-- **FILE_INDEX.md** — authoritative map of repository contents, file roles, and update rules  
+- **FILE_INDEX.md**  
+  Canonical index of repository contents  
   https://github.com/tstandke/AndroidDev_ToolChain/blob/main/FILE_INDEX.md
 
-- **STATUS.md** — current completion state, verification results, blockers, and next actions  
+- **STATUS.md**  
+  Machine-specific, current completion state  
   https://github.com/tstandke/AndroidDev_ToolChain/blob/main/STATUS.md
 
-Together, these files form the **canonical documentation spine**:
-1. `Project_Prompt.md` — intent, pinned decisions, and reproduction steps
-2. `README.md` — operational usage and helper tooling
-3. `FILE_INDEX.md` — structure, purpose, and update rules
-4. `STATUS.md` — what is actually done, and what is next
-
-AI assistants should treat this spine as the source of truth, and prefer updating it over repeating guidance in chat.
-
-
-## 3. Technology Stack (Pinned Choices)
-
-### Workstation Platform
-- Windows 11 (primary target)
-- Windows Terminal (preferred)
-- PowerShell 7 (preferred) or Windows PowerShell 5.1 (acceptable)
-
-### Source Control
-- Git for Windows (installed and on PATH)
-- GitHub (public repos allowed; private repos optional)
-- GitHub CLI `gh` (recommended)
-
-### Android Tooling
-- Android Studio (stable channel)
-- Android SDK Platform Tools (adb/fastboot)
-- Android SDK Build Tools (pinned per project)
-- Android Emulator (AVD Manager via Android Studio)
-- Gradle (via wrapper; do not install global Gradle unless explicitly required)
-
-### Java Tooling
-- JDK (prefer the JDK bundled with Android Studio unless a project requires a specific external JDK)
-- JAVA_HOME set only if required by tooling; prefer Android Studio embedded JDK when possible
-
 ---
 
-## 4. Git Tooling (Source Control Foundation)
+## 5. AI Collaboration Rules
 
-### What Git Is and Why It Is Required
-Git is a **distributed version control system** used to track changes to files over time. In this toolchain, Git serves as the foundational mechanism for recording all source code and documentation changes, enabling safe experimentation via branches, supporting reproducibility by preserving full history, and enabling collaboration and review workflows.
+When this document is provided to an AI assistant:
 
-### Git vs GitHub
-- **Git** is the version control tool installed on your machine.
-- **GitHub** is a hosted service that stores Git repositories and adds collaboration, access control, and automation.
-
-Git must be installed first. GitHub access is layered on top.
-
-### 4.1 Git Installation Check
-Command:
-```
-git --version
-```
-
-Expected result:
-```
-git version 2.x.y.windows.z
-```
-
-### 4.2 Git Installation (If Missing)
-Install **Git for Windows** using the official installer. After installation, close and reopen PowerShell, then re-run `git --version`.
-
-### 4.3 GitHub CLI (`gh`) Installation Check
-Command:
-```
-gh --version
-```
-
-If not recognized, install using:
-```
-winget install --id GitHub.cli
-```
-
-Close and reopen PowerShell after installation.
-
-### 4.4 GitHub Authentication
-Authenticate once per machine:
-```
-gh auth login
-```
-
-Verify:
-```
-gh auth status
-```
-
-Tooling is considered complete only when `git --version`, `gh --version`, and `gh auth status` all succeed.
-
----
-
-## 5. Security Model (Non-Negotiable Principles)
-1. Secrets are never committed.
-2. Prefer least-privilege credentials.
-3. Use secure credential storage.
-4. Release signing keys are protected and backed up.
-5. CI/CD secrets are managed via GitHub Secrets.
+- Treat this file as **source of truth**
+- Read linked documents before proposing actions
+- Prefer updating canonical files over chat-only advice
+- Detect and warn about documentation drift
+- Offer to update `STATUS.md` when steps are completed
+- Propose helper scripts or structured prompts when useful
 
 ---
 
 ## 6. Canonical Toolchain Setup Flow
-1. Install Git and GitHub CLI
-2. Install Android Studio and SDKs
-3. Configure environment
-4. Verify emulator/device workflow
-5. Scaffold projects
-6. Configure signing
-7. Configure CI/CD
+
+> This section defines the **required sequence** for setting up the toolchain.  
+> Steps must be completed in order unless explicitly noted.
+
+### 6.1 Repository & Source Control
+
+1. Install and verify Git for Windows  
+2. Authenticate with GitHub  
+3. Clone repository and verify working tree  
+4. Validate helper scripts (`GitUpdate-*.ps1`)  
+
+**Record results in:** `STATUS.md`
 
 ---
 
-## 7. Validation Commands (Minimum Acceptance)
-- `git --version`
-- `gh --version`
-- `adb version`
-- `adb devices`
-- `./gradlew assembleDebug`
+### 6.2 Flutter Toolchain Installation
+
+1. Install Flutter SDK (stable)  
+2. Add Flutter to PATH  
+3. Run `flutter doctor`  
+4. Resolve all Android blocking issues  
+
+**Record results in:** `STATUS.md`
 
 ---
 
-## 8. Repository Structure
-```
-repo_root/
-  docs/
-  scripts/
-  templates/
-  Project_Prompt.md
-  README.md
-  FILE_INDEX.md
-  STATUS.md
-```
+### 6.3 Android Development Environment
+
+1. Install Android Studio  
+2. Launch and verify baseline startup  
+3. Install required SDK components  
+4. Configure emulator (AVD)  
+5. Verify `adb` connectivity  
+
+**Record results in:** `STATUS.md`
 
 ---
 
+### 6.4 Flutter + Android Build Verification
 
+1. Create or open Flutter project  
+2. Run `flutter pub get`  
+3. Run `flutter run`  
+4. Verify hot reload and debug output  
 
----
-
-## AI Collaboration Hint (Author Preference)
-
-When assisting with this repository, the author prefers **prompt-style documents** like this one to be *created, refined, and extended proactively*.
-
-Specifically:
-- When a new workflow, tool, or recurring process emerges, **propose a structured prompt or companion document** (similar to `Project_Prompt.md`, `STATUS.md`, or helper scripts).
-- Favor **explicit, reusable prompts** over ad-hoc explanations.
-- When in doubt, suggest creating a small, focused Markdown file plus a narrow PowerShell update helper.
+**Record results in:** `STATUS.md`
 
 ---
 
-## AI Maintenance Hint (Staleness Prevention)
+### 6.5 Identity & Authentication Setup
 
-When assisting with this repository, the AI should **actively watch for documentation drift**.
+1. Create Firebase project  
+2. Link to Google Cloud project  
+3. Enable Firebase Authentication  
+4. Configure Google Sign-In  
+5. Register Android app  
+6. Add SHA-1 / SHA-256 fingerprints  
+7. Configure Flutter Firebase Auth  
+8. Verify interactive sign-in  
 
-Specifically:
-- If guidance, commands, or workflows are discussed that would change the meaning or accuracy of any canonical file (`Project_Prompt.md`, `README.md`, `FILE_INDEX.md`, `STATUS.md`), **proactively offer to update the relevant file**.
-- Prefer **updating the source document** over repeating or paraphrasing instructions in chat.
-- When changes are operational or machine-specific, propose updates to **`STATUS.md`**.
-- When changes are structural or conceptual, propose updates to **`Project_Prompt.md`** or **`FILE_INDEX.md`**.
-- When changes affect usage or helper scripts, propose updates to **`README.md`**.
+**Record results in:** `STATUS.md`
 
-The goal is to keep the repository as the **living source of truth**, minimizing stale guidance across sessions.
+---
 
+### 6.6 Authorization & Backend Integration
 
-## 9. Lessons Learned / FAQ
-- Always use Gradle wrapper.
-- CLI builds must succeed before proceeding.
-- Treat signing keys as production secrets.
-- Document failures immediately.
+1. Define authorization model  
+2. Verify ID tokens server-side  
+3. Enforce authorization rules  
+4. Validate rejection paths  
 
+**Record results in:** `STATUS.md`
 
+---
 
+### 6.7 App Attestation & Hardening
+
+1. Enable Firebase App Check  
+2. Configure Play Integrity  
+3. Validate debug vs release behavior  
+4. Enforce App Check  
+
+**Record results in:** `STATUS.md`
+
+---
+
+### 6.8 Automation & CI (Optional / Later)
+
+1. Baseline GitHub Actions  
+2. Flutter build verification  
+3. Android artifact generation  
+
+---
+
+## 7. Completion Criteria
+
+The toolchain is complete only when:
+
+- Flutter toolchain is verified
+- Android execution is validated
+- Authentication works end-to-end
+- Authorization is enforced server-side
+- Attestation is active for production paths
+
+---
+
+## 8. Maintenance Rule
+
+If this file, `STATUS.md`, or `FILE_INDEX.md` becomes outdated,  
+**update the documentation first**, then proceed with implementation.
