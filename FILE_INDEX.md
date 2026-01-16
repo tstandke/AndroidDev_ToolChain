@@ -50,19 +50,10 @@ It complements (but does not replace) the GitHub file tree.
 
 ---
 
-## Script Inventory (in `scripts/`)
+## Document Inventory (in `docs/`)
 
-- `scripts/GitUpdate-README.ps1`
-  - Stages, commits, and pushes changes to `README.md` only
-
-- `scripts/GitUpdate-Project_Prompt.ps1`
-  - Stages, commits, and pushes changes to `Project_Prompt.md` only
-
-- `scripts/GitUpdate-FILE_INDEX.ps1`
-  - Stages, commits, and pushes changes to `FILE_INDEX.md` only
-
-- `scripts/GitUpdate-STATUS.ps1`
-  - Stages, commits, and pushes changes to `STATUS.md` only
+- `6_2_Flutter_Toolchain_Installation.md`
+  - Step-by-step procedure for verifying, upgrading, or installing the Flutter SDK as part of Section 6.2 of the canonical toolchain setup flow.
 
 ---
 
