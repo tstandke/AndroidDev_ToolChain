@@ -33,8 +33,10 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 - GitHub identity — **DONE**
   - Username: `tstandke`
-  - Account email: `standket@gmail.com`
-  - Credential storage: **NordPass** (password / token vault)
+  - Primary accounts in use:
+    - `standket@gmail.com` (Firebase / Google Cloud ownership)
+    - `tstandke@msoltec.com` (secondary)
+  - Credential storage: **NordPass**
 
 - Git for Windows — **DONE**
   - Verify: `git --version`
@@ -44,90 +46,149 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
   - Verify: `gh auth status`
   - Result: authenticated as `tstandke`
 
-- Repo helper scripts (`GitUpdate-*.ps1`) — **DONE**
-  - Verified: README, Project_Prompt, FILE_INDEX, STATUS update scripts
-  - Note: scripts auto-detect repo root and run correctly from `/scripts`
-
 ---
 
 ### Flutter Toolchain
 
 - Flutter SDK — **DONE**
-  - Path: Existing installation verified and updated in place
-  - Action: `flutter channel stable`, `flutter upgrade`
-  - Verify: `flutter --version`
-  - Result: `3.38.7`, stable channel
+  - Channel: `stable`
+  - Version: `3.38.7`
   - Install path: `C:\src\flutter`
+  - Verified via `flutter --version`
 
 - Flutter Doctor — **DONE**
-  - Verify: `flutter doctor`
-  - Result: Flutter SDK OK
+  - Result: Android toolchain healthy
   - Notes:
-    - Android tooling detected and licensed
-    - Visual Studio missing (Windows desktop apps only; **out of scope**)
+    - Android licenses accepted
+    - Visual Studio missing (Windows desktop only; **out of scope**)
 
 ---
 
 ### Android Tooling
 
-- Android Studio (stable) — **DONE**
-  - Detected via Flutter Doctor
-  - Bundled JDK in use
+- Android Studio — **DONE**
+  - Stable channel
+  - Bundled JBR (OpenJDK 17) in use
 
-- Android SDK Platform Tools — **DONE**
-  - SDK path: `C:\Users\Tim\AppData\Local\Android\sdk`
-  - Platforms: `android-36`
+- Android SDK — **DONE**
+  - SDK path: `C:\Users\Tim\AppData\Local\Android\Sdk`
+  - Platform: `android-36`
   - Build-tools: `36.0.0`
-  - Licenses: all accepted
+  - Emulator functional
 
-- Android Emulator (AVD) — **DONE**
-  - Emulator present (verified via Flutter Doctor)
+- Android Emulator — **DONE**
+  - Target: `sdk gphone64 x86_64`
+  - `flutter run` installs and launches APK successfully
 
 - Physical device (USB debugging) — **IN PROGRESS**
-  - Devices detected via Flutter Doctor
-  - Explicit `adb devices` verification pending
+  - Not required for current work
 
 ---
 
-### Build System
+### Reference Flutter App (`reference_app`)
 
-- Java (JDK) — **DONE**
-  - Source: Android Studio bundled JBR
-  - Version: OpenJDK 17.0.7
+- App creation — **DONE**
+  - Generated via `flutter create`
 
-- Gradle wrapper verification — **DONE**
-  - Verified implicitly via successful `flutter run`
-  - Gradle tasks executed: `assembleDebug`
+- Android package name — **DONE**
+  - Updated from `com.example.reference_app` → `com.toolchain.reference_app`
+  - Verified in:
+    - `android/app/build.gradle.kts`
+    - Kotlin source path
 
-- Flutter Android debug run (`flutter run`) — **DONE**
-  - Target: Android emulator (`emulator-5554`)
-  - Result: APK built, installed, and launched successfully
-  - Debug console active; hot reload available
-
----
-
-### CI / Automation
-
-- GitHub Actions baseline — **NOT STARTED**
+- Build & run (no auth) — **DONE**
+  - `flutter run` builds, installs, and launches
 
 ---
 
-## Known Issues / Notes
+### Firebase / Authentication (Section 6.5)
 
-- Flutter reports missing Visual Studio for Windows desktop builds.
-  - This is **not required** for Android or future iOS targets.
-  - Intentionally not installed at this time.
-- During first reference app run, Android emulator temporarily appeared as `adb offline`.
-  - Resolved via `adb kill-server` / `adb start-server`
-  - Emulator resumed normal operation (`device` state) and build succeeded
+- Firebase CLI — **DONE**
+  - Version: `14.4.0`
+
+- FlutterFire CLI — **DONE**
+  - Version: `1.3.1`
+
+- Firebase project — **DONE**
+  - Project name: **AndroidDev-ToolChain**
+  - Project ID: `androiddev-toolchain`
+
+- Firebase apps registered — **DONE**
+  - Android app:
+    - Package: `com.toolchain.reference_app`
+    - App nickname: `toolchain_ref_app`
+  - iOS app auto-registered by FlutterFire (not yet used)
+
+- `google-services.json` — **DONE**
+  - Downloaded *after* SHA-1 fingerprint was added
+  - Placed at: `reference_app/android/app/google-services.json`
+
+- SHA-1 fingerprint — **DONE**
+  - Debug keystore SHA-1 added in Firebase Console
+  - Verified visible under Android app settings
+
+- FlutterFire configuration — **DONE**
+  - `flutterfire configure` completed
+  - `lib/firebase_options.dart` generated
+
+- Firebase dependencies — **DONE**
+  - `firebase_core`
+  - `firebase_auth`
+  - `google_sign_in`
+
+- Google Sign-In provider — **DONE (Console-side)**
+  - Enabled in Firebase Authentication → Sign-in method
+
+- Google Sign-In runtime integration — **BLOCKED**
+  - App builds and runs
+  - Google sign-in UI launches
+  - **Error at runtime:**
+    ```
+    GoogleSignInException(code: unknownError,
+    No credential available: No credentials available)
+    ```
 
 ---
 
-## Next Actions (Priority Order)
+## Known Issues / Root Cause Analysis (So Far)
 
-1. Begin Section 6.5 — Identity & Authentication Setup
-   - Implement Firebase Authentication (Google Sign-In) in `reference_app`
-2. Record authentication verification results in `STATUS.md`
+- **google_sign_in v7.x API change**
+  - Old `signIn()` flow removed
+  - Requires:
+    - `GoogleSignIn.instance.initialize(serverClientId: ...)`
+    - `authenticate()`
+    - Listening to `authenticationEvents`
+
+- **OAuth client mismatch suspected**
+  - Android OAuth client (type 1) present
+  - Web / server OAuth client (type 3) present
+  - Runtime error indicates **no credential resolved on device**
+
+- **Most likely remaining causes** (to verify next session):
+  1. OAuth client not fully propagated after recent changes (console-side delay)
+  2. Wrong client ID used as `serverClientId` (must be type 3, same project)
+  3. Cached Play Services / emulator state
+  4. Emulator requires cold boot after OAuth changes
+
+---
+
+## Recommended First Steps for Next Session
+
+1. Cold-boot Android emulator
+2. Clear emulator Google Play Services data (if needed)
+3. Reconfirm **only one** Firebase project is active
+4. Reconfirm OAuth client IDs in Google Cloud Console
+5. Verify `serverClientId` matches **type 3** client exactly
+6. Retry sign-in without further code changes
+
+---
+
+## Next Actions (Priority)
+
+1. Resolve Google Sign-In credential issue (Section 6.5)
+2. Confirm successful Firebase user creation
+3. Capture final working configuration in `6_5_Identity_Authentication_Setup.md`
+4. Commit updated `STATUS.md` to GitHub
 
 ---
 
@@ -135,4 +196,5 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 - Update this file whenever a status changes
 - Keep entries concise and factual
-- Summarize outcomes; do not embed long logs
+- Capture *why* something is blocked, not just *that* it is blocked
+
