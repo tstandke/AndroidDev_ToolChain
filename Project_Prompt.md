@@ -333,14 +333,65 @@ This ensures the repository remains resumable and deterministic across sessions 
 
 ---
 
-### 6.4 Flutter + Android Build Verification
+### 6.4 Flutter + Android Build Verification (Canonical Reference Application)
 
-1. Create or open Flutter project  
-2. Run `flutter pub get`  
-3. Run `flutter run`  
-4. Verify hot reload and debug output  
+This step validates that the Android / Flutter toolchain can successfully
+**build, deploy, and run a real Flutter application** using the canonical
+reference app defined by this repository.
+
+The purpose of this step is to confirm that toolchain components
+(Flutter, Android SDK, Gradle, emulator/device, and supporting tools)
+work together correctly on the current machine.
+
+The canonical reference application is located at:
+
+- `reference_app/`
+
+---
+
+#### Procedure
+
+1. Change directory into the reference application:
+   ```powershell
+   cd reference_app
+   ```
+
+2. Fetch Flutter dependencies:
+   ```powershell
+   flutter pub get
+   ```
+
+3. Run the application on an Android emulator or connected device:
+   ```powershell
+   flutter run
+   ```
+
+4. Verify the following:
+   - Gradle build completes successfully
+   - The application installs and launches on the target device/emulator
+   - Debug output appears in the console
+   - Hot reload functions as expected
+
+---
+
+#### Interpretation
+
+- Success in this step confirms that the **Android / Flutter toolchain is functional**.
+- Failure at this step, especially after toolchain updates, indicates a **toolchain regression** rather than an application defect.
+- This step is intentionally performed using the **canonical reference application**, not a production or experimental app.
+
+---
+
+#### Scope and Non-Goals
+
+- This step does **not** validate application feature completeness.
+- UI/UX quality is explicitly out of scope.
+- The reference application exists solely to validate and diagnose the toolchain.
+
+---
 
 **Record results in:** `STATUS.md`
+
 
 ---
 
