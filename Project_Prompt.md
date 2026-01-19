@@ -160,6 +160,10 @@ Its sole purpose is to make the toolchain **provable, repeatable, and diagnosabl
 - **Firebase Project**
   - Created explicitly for the application
   - Linked to a Google Cloud project
+> **Note (important):** Every Firebase project is backed by (and linked to) a Google Cloud project.
+> Firebase may create this GCP project automatically during Firebase project creation.
+> OAuth client IDs used for Google Sign-In live in the linked GCP project (Google Cloud Console → APIs & Services → Credentials),
+> even if you never manually “used GCP.”
 - **Google Cloud Platform (GCP)**
   - Required for:
     - Firebase backend services
@@ -405,6 +409,37 @@ The canonical reference application is located at:
 6. Add SHA-1 / SHA-256 fingerprints  
 7. Configure Flutter Firebase Auth  
 8. Verify interactive sign-in  
+#### Verification Checklist (Firebase ↔ GCP linkage)
+This checklist prevents a common failure mode where authentication fails due to mismatched Google project context.
+
+**A) Confirm you are in the correct Firebase project**
+- Firebase Console → select the project
+- Verify **Project ID** matches expected (e.g., `androiddev-toolchain`)
+
+**B) Confirm which Google account owns/has access**
+- Ensure you are logged into the same Google identity used to create the Firebase project.
+- If the Firebase project is not visible under the current login, you are in the wrong Google identity.
+
+**C) Confirm linked GCP project from Firebase**
+- Firebase Console → Project settings → General
+- Find the linked Google Cloud project
+- Click **“View in Google Cloud Console”** (use this link to avoid guessing)
+
+**D) Confirm OAuth clients exist in the linked GCP project**
+- Google Cloud Console (from the link above) → APIs & Services → Credentials
+- Under “OAuth 2.0 Client IDs”, confirm:
+  - **Android client** exists for package `com.toolchain.reference_app` and includes the correct SHA-1
+  - **Web application client** exists (often labeled “Web client (auto created by Google Service)”)
+
+**E) Confirm app uses the correct Web Client ID**
+- The `serverClientId` used in the app must match the **Web application** Client ID (ends with `.apps.googleusercontent.com`)
+- Using the Android client ID or a Web client ID from another project can cause:
+  - `No credential available`
+
+**F) Propagation note**
+- OAuth/SHA changes may take time to propagate.
+- If sign-in fails immediately after console changes:
+  - wait briefly, retry, and cold-boot the emulator.
 
 **Record results in:** `STATUS.md`
 
@@ -412,10 +447,31 @@ The canonical reference application is located at:
 
 ### 6.6 Authorization & Backend Integration
 
-1. Define authorization model  
-2. Verify ID tokens server-side  
-3. Enforce authorization rules  
-4. Validate rejection paths  
+> Precondition: Section 6.5 is **DONE** and interactive Google Sign-In succeeds reliably.
+> Authorization work begins only after authentication is confirmed stable.
+
+1. Define authorization model
+   - Decide the server-side source of truth (e.g., Firestore allowlist, roles, groups)
+   - Define minimum fields (e.g., `users/{uid}: { role, enabled, createdAt, updatedAt }`)
+   - Define expected denial behavior (401 vs 403) for unauthenticated vs unauthorized
+
+2. Verify ID tokens server-side
+   - Client must present Firebase ID token to backend (e.g., `Authorization: Bearer <token>`)
+   - Backend verifies token using Firebase Admin SDK
+   - Backend rejects missing/invalid/expired tokens (401 Unauthorized)
+
+3. Enforce authorization rules (server-side)
+   - After token verification, resolve caller identity (UID, email, claims)
+   - Lookup authorization status/role in Firestore (or other source)
+   - Reject unauthorized users (403 Forbidden)
+   - Return only authorized data/actions
+
+4. Validate rejection paths (test cases)
+   - No token → 401
+   - Invalid token → 401
+   - Valid token but not allowlisted → 403
+   - Valid token and allowlisted → success
+   - Optional: revoked/disabled user → 403 (or 401 depending on policy)
 
 **Record results in:** `STATUS.md`
 
