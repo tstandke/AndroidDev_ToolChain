@@ -139,14 +139,12 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 - Google Sign-In provider — **DONE (Console-side)**
   - Enabled in Firebase Authentication → Sign-in method
 
-- Google Sign-In runtime integration — **BLOCKED**
-  - App builds and runs
-  - Google sign-in UI launches
-  - **Error at runtime:**
-    ```
-    GoogleSignInException(code: unknownError,
-    No credential available: No credentials available)
-    ```
+- Google Sign-In runtime integration — **IN PROGRESS**
+  - Interactive login + MFA + consent completes
+  - Current runtime error:
+    GoogleSignInException(code: unknownError, [28444] Developer console is not set up correctly)
+  - Next verification:
+    Configure Google Auth Platform → Branding/Audience (OAuth consent screen), ensure test user added and required fields set.
 
 ---
 
