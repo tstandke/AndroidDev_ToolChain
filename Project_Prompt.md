@@ -196,6 +196,25 @@ Its sole purpose is to make the toolchain **provable, repeatable, and diagnosabl
 
 ---
 
+### 3.10 Python Runtime (REQUIRED)
+
+- **Python**
+  - Version: 3.11+ (3.12 recommended)
+  - Installed system-wide
+  - Must support `venv` and `pip`
+- **Virtual Environments**
+  - Each backend service uses a local `.venv`
+  - No global Python package installs
+- **Verification**
+  - `python --version`
+  - `python -m venv .venv`
+  - `pip install -r requirements.txt`
+
+> Python is required for backend services (FastAPI, Firebase Admin SDK, Firestore).
+> Backend services must not rely on system-global Python packages.
+
+---
+
 ## 4. Repository Navigation (Required Reading)
 
 This file is the entry point. The following files must be consulted:
