@@ -66,6 +66,15 @@ It complements (but does not replace) the GitHub file tree.
 - `6_3_Android_Toolchain_Installation.md`
   - Step-by-step procedure for installing and verifying Android Studio, required Android SDK components, emulator (AVD), and `adb` connectivity as part of Section 6.3 of the canonical toolchain setup flow.
 
+- `6_4_Flutter_Android_Build_Verification.md`
+  - Step-by-step procedure for Section 6.4 toolchain validation: building, deploying, and running the canonical `reference_app` via `flutter run`.
+
+- `6_5_Identity_Authentication_Setup.md`
+  - Step-by-step procedure for Section 6.5: Firebase project setup, Google Sign-In configuration, SHA fingerprints, and end-to-end authentication verification.
+  
+- `6_6_Authorization.md`
+  - Locked authorization schema and workflow for Section 6.6 (Option A → Option B), including 401 vs 403 semantics and bootstrap admin policy.
+
 ---
 
 ## Reference Application Inventory (in `reference_app/`)
