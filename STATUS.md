@@ -11,7 +11,7 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 ## Snapshot
 
-- **Last updated:** 2026-01-16
+- **Last updated:** 2026-01-22
 - **Machine:** Tim-PC
 - **Primary shell:** PowerShell
 - **OS:** Windows 11 Home (25H2)
@@ -74,14 +74,14 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
   - SDK path: `C:\Users\Tim\AppData\Local\Android\Sdk`
   - Platform: `android-36`
   - Build-tools: `36.0.0`
-  - Emulator functional
 
 - Android Emulator — **DONE**
-  - Target: `sdk gphone64 x86_64`
+  - Emulator functional
   - `flutter run` installs and launches APK successfully
 
-- Physical device (USB debugging) — **IN PROGRESS**
-  - Not required for current work
+- Physical device (USB debugging) — **DONE (verified)**
+  - Device used: Pixel 6
+  - `flutter run` installs and launches in debug mode
 
 ---
 
@@ -96,7 +96,7 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
     - `android/app/build.gradle.kts`
     - Kotlin source path
 
-- Build & run (no auth) — **DONE**
+- Build & run (baseline) — **DONE**
   - `flutter run` builds, installs, and launches
 
 ---
@@ -120,8 +120,7 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
   - iOS app auto-registered by FlutterFire (not yet used)
 
 - `google-services.json` — **DONE**
-  - Downloaded *after* SHA-1 fingerprint was added
-  - Placed at: `reference_app/android/app/google-services.json`
+  - Present at: `reference_app/android/app/google-services.json`
 
 - SHA-1 fingerprint — **DONE**
   - Debug keystore SHA-1 added in Firebase Console
@@ -136,57 +135,47 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
   - `firebase_auth`
   - `google_sign_in`
 
-- Google Sign-In provider — **DONE (Console-side)**
-  - Enabled in Firebase Authentication → Sign-in method
+- Firebase initialization in app — **DONE**
+  - `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` executed before any Auth calls
 
-- Google Sign-In runtime integration — **IN PROGRESS**
-  - Interactive login + MFA + consent completes
-  - Current runtime error:
-    GoogleSignInException(code: unknownError, [28444] Developer console is not set up correctly)
-  - Next verification:
-    Configure Google Auth Platform → Branding/Audience (OAuth consent screen), ensure test user added and required fields set.
+- Google provider enabled (Firebase Console) — **DONE**
+  - Firebase Console → Authentication → Sign-in method → Google: Enabled
 
----
+- Google Sign-In runtime integration — **DONE**
+  - Interactive login succeeds
+  - Account chooser appears
+  - Firebase session established (`FirebaseAuth.instance.signInWithCredential` succeeds)
+  - Verification output observed:
+    - Selected account email displayed
+    - Firebase user email displayed
 
-## Known Issues / Root Cause Analysis (So Far)
-
-- **google_sign_in v7.x API change**
-  - Old `signIn()` flow removed
-  - Requires:
-    - `GoogleSignIn.instance.initialize(serverClientId: ...)`
-    - `authenticate()`
-    - Listening to `authenticationEvents`
-
-- **OAuth client mismatch suspected**
-  - Android OAuth client (type 1) present
-  - Web / server OAuth client (type 3) present
-  - Runtime error indicates **no credential resolved on device**
-
-- **Most likely remaining causes** (to verify next session):
-  1. OAuth client not fully propagated after recent changes (console-side delay)
-  2. Wrong client ID used as `serverClientId` (must be type 3, same project)
-  3. Cached Play Services / emulator state
-  4. Emulator requires cold boot after OAuth changes
+- Web OAuth Client ID (serverClientId) — **DONE (pinned; exact match required)**
+  - **kServerClientId (type-3 Web client ID):**
+    - `883224591051-apnl4fdr2on5ar1d1pbhfk2fpoi0ldle.apps.googleusercontent.com`
+  - Lessons learned: one-character mismatch (`l` vs `1`) caused repeated sign-in failures; do not OCR this value.
 
 ---
 
-## Recommended First Steps for Next Session
+## Known Issues / Root Cause Analysis (Resolved)
 
-1. Cold-boot Android emulator
-2. Clear emulator Google Play Services data (if needed)
-3. Reconfirm **only one** Firebase project is active
-4. Reconfirm OAuth client IDs in Google Cloud Console
-5. Verify `serverClientId` matches **type 3** client exactly
-6. Retry sign-in without further code changes
+- **Client ID transcription error (resolved)**
+  - Symptom(s):
+    - `No credential available`
+    - `[28444] Developer console is not set up correctly`
+  - Root cause:
+    - Web Client ID in app did not match GCP “Web client” ID exactly (OCR/transcription error)
+  - Fix:
+    - Copy/paste Web Client ID from Google Auth Platform → Clients → Web client
+    - Confirm exact match character-for-character
 
 ---
 
 ## Next Actions (Priority)
 
-1. Resolve Google Sign-In credential issue (Section 6.5)
-2. Confirm successful Firebase user creation
-3. Capture final working configuration in `6_5_Identity_Authentication_Setup.md`
-4. Commit updated `STATUS.md` to GitHub
+1. **Section 6.6 Authorization & Backend Integration — NOT STARTED**
+   - Define authorization model and server enforcement path
+2. Capture final working auth flow notes under `docs/` (optional but recommended)
+3. Commit updated `Project_Prompt.md` and `STATUS.md` to GitHub
 
 ---
 
@@ -194,5 +183,4 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 - Update this file whenever a status changes
 - Keep entries concise and factual
-- Capture *why* something is blocked, not just *that* it is blocked
-
+- Capture *why* something was blocked or fixed, not just *that* it changed
