@@ -458,6 +458,9 @@ This checklist prevents a common failure mode where authentication fails due to 
 
 ### 6.6 Authorization & Backend Integration
 
+> Detailed schema and workflow for this section are locked in:
+> `docs/6_6_Authorization.md`
+
 > Precondition: Section 6.5 is **DONE** and interactive Google Sign-In succeeds reliably.
 > Authorization work begins only after authentication is confirmed stable.
 
