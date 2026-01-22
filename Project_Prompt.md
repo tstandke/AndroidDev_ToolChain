@@ -409,6 +409,7 @@ The canonical reference application is located at:
 6. Add SHA-1 / SHA-256 fingerprints  
 7. Configure Flutter Firebase Auth  
 8. Verify interactive sign-in  
+
 #### Verification Checklist (Firebase ↔ GCP linkage)
 This checklist prevents a common failure mode where authentication fails due to mismatched Google project context.
 
@@ -435,11 +436,21 @@ This checklist prevents a common failure mode where authentication fails due to 
 - The `serverClientId` used in the app must match the **Web application** Client ID (ends with `.apps.googleusercontent.com`)
 - Using the Android client ID or a Web client ID from another project can cause:
   - `No credential available`
+  - `[28444] Developer console is not set up correctly`
 
 **F) Propagation note**
 - OAuth/SHA changes may take time to propagate.
 - If sign-in fails immediately after console changes:
   - wait briefly, retry, and cold-boot the emulator.
+
+#### Lessons Learned (reference_app: Web Client ID must be exact)
+- **Root cause encountered:** A one-character transcription error in the Web Client ID (`l` vs `1`, and one missing `l`) caused repeated Google Sign-In failures and misleading errors.
+- **Non-negotiable rule:** The Web Client ID must match **character-for-character**. Even a single character mismatch breaks token issuance.
+- **Where to source the value:** Google Cloud Console → Google Auth Platform → Clients → **Web client (auto created by Google Service)** → copy the Client ID that ends with `.apps.googleusercontent.com`.
+- **Do not OCR this value** from screenshots. Copy/paste from the console whenever possible.
+- **Pinned value (known-good for this repo’s current Firebase/GCP project):**
+  - `883224591051-apnl4fdr2on5ar1d1pbhfk2fpoi0ldle.apps.googleusercontent.com`
+- **Important:** If the Firebase/GCP project is recreated, the Web Client ID will change. If authentication breaks after project recreation, re-run the checklist and re-pin the new value.
 
 **Record results in:** `STATUS.md`
 
