@@ -6,5 +6,14 @@ This service will:
 - Enforce authorization using Firestore
 - Return correct HTTP semantics (401 vs 403)
 
-Implementation will be added incrementally.
+Implementation is added incrementally.
 """
+
+from fastapi import FastAPI
+
+app = FastAPI(title="Authorization Backend", version="0.1.0")
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
