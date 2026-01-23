@@ -1,54 +1,104 @@
 # 6.6 Authorization — Locked Schema & Workflow (Option A → Option B)
 
-This document locks the authorization schema and workflow for the toolchain reference application.
-It is designed so Option A (manual admin via Firestore Console) can evolve into Option B (Admin App)
-without schema changes or rework.
+This document locks the **authorization model, workflow, and validation procedure** for the toolchain reference application.
+
+It is explicitly written to:
+- Prevent rediscovery of known pitfalls
+- Provide deterministic diagnostics when authorization fails
+- Allow Option A (manual admin via Firestore Console) to evolve into Option B (Admin App)
+  **without schema changes or rework**
+
+This document is normative for Section 6.6 of `Project_Prompt.md`.
 
 ---
 
-## 1. Goals
+## 1. Purpose & Scope
 
-- Enforce authorization server-side (client UI never determines access).
-- Provide a deterministic workflow for:
-  - User authorization requests
-  - Admin approval/denial
-  - User notification in-app
-- Preserve forward compatibility:
-  - Option A (Firestore Console) → Option B (Admin App) with no schema migration.
+This section defines **server-side authorization only**.
+
+It does **not** define:
+- UI/UX behavior
+- Product-specific business logic
+- Fine-grained RBAC beyond coarse roles
+
+The reference application exists to validate **mechanics and correctness**, not to serve as a production authorization system.
 
 ---
 
-## 2. Core Policy (Locked)
+## 2. System Assumptions & Preconditions (REQUIRED)
 
-### 2.1 Authentication vs Authorization
-- Authentication proves identity (Firebase Auth).
-- Authorization determines permission (Firestore + server enforcement).
+Authorization testing is **invalid** unless all assumptions below are true.
 
-### 2.2 HTTP Semantics (Backend)
-- Missing/invalid/expired token → **401 Unauthorized**
+### 2.1 Identity & Project Context
+- Firebase project, linked GCP project, and OAuth clients belong to the **same Google account context**
+- Firebase Authentication is already working interactively (Section 6.5 DONE)
+- The client is using the **Web OAuth Client ID**, not the Android client ID
+
+### 2.2 Backend Runtime
+- Backend is running locally via FastAPI
+- Backend is bound to all interfaces:
+  ```bash
+  uvicorn main:app --reload --host 0.0.0.0 --port 8000
+  ```
+- Backend port is fixed and known (default: `8000`)
+
+### 2.3 Networking
+- Emulator uses `http://10.0.2.2:8000` to reach the host
+- Physical devices use the PC’s **LAN IPv4 address**
+- PC firewall allows inbound TCP traffic on the backend port
+- VPNs (even when “paused”) may block LAN routing and must be fully disconnected
+
+### 2.4 Time & Tokens
+- Firebase ID tokens are short-lived (~1 hour)
+- All authorization tests must use a **fresh ID token**
+- Manual token copy/paste is discouraged and error-prone
+
+---
+
+## 3. Core Policy (Locked)
+
+### 3.1 Authentication vs Authorization
+- **Authentication** proves identity (Firebase Auth)
+- **Authorization** determines permission (Firestore + backend enforcement)
+
+The client UI must never determine authorization outcomes.
+
+### 3.2 HTTP Semantics (Backend)
+- Missing / malformed / expired token → **401 Unauthorized**
 - Valid token but not allowlisted or disabled → **403 Forbidden**
-- Valid token and allowlisted/enabled → **200 OK**
+- Valid token and allowlisted + enabled → **200 OK**
 
-### 2.3 Bootstrap Admin (One-time)
-- A single initial administrator is created manually in Firestore (out-of-band).
-- After bootstrap, all approvals/denials are performed via the defined workflow (Option A or B).
-- The backend must be the authority for role assignment and privileged writes.
+These semantics are locked.
 
 ---
 
-## 3. Firestore Schema (Locked)
+## 4. Authorization Source of Truth (Locked)
 
-### 3.1 Collection: `users`
-Document ID: `{uid}` (Firebase Auth UID)
+### 4.1 Firestore Collection
 
-Minimal fields:
-- `enabled` (bool)
-- `role` (string; e.g., `admin`, `user`)
-- `email` (string)
-- `createdAt` (timestamp; server)
-- `updatedAt` (timestamp; server)
+Concrete collection used by the reference backend:
 
-Example:
+```
+authz_users
+```
+
+(Document naming is case-sensitive.)
+
+### 4.2 Document ID
+- Document ID **must equal** the Firebase Auth `uid`
+
+### 4.3 Required Fields
+
+| Field | Type | Notes |
+|-----|-----|------|
+| `enabled` | boolean | **Must be true** to authorize |
+| `role` | string | e.g., `admin`, `user` |
+| `email` | string | For audit/debug only |
+| `createdAt` | timestamp | Server-side |
+| `updatedAt` | timestamp | Server-side |
+
+### 4.4 Example (Known-Good)
+
 ```json
 {
   "enabled": true,
@@ -57,3 +107,121 @@ Example:
   "createdAt": "<server_timestamp>",
   "updatedAt": "<server_timestamp>"
 }
+```
+
+⚠️ Field names are **case-sensitive**.  
+`Enabled` ≠ `enabled`.
+
+---
+
+## 5. Authorization Workflow (End-to-End)
+
+1. Client signs in via Firebase Authentication
+2. Client requests a **fresh Firebase ID token**
+3. Client calls backend endpoint with:
+   ```http
+   Authorization: Bearer <id_token>
+   ```
+4. Backend verifies token using Firebase Admin SDK
+5. Backend extracts `uid` and resolves Firestore document
+6. Backend enforces:
+   - document exists
+   - `enabled == true`
+7. Backend returns:
+   - `200 OK` with identity + role, or
+   - appropriate 401 / 403 error
+
+---
+
+## 6. Stage-by-Stage Verification Checklist (Diagnostic Ladder)
+
+Use this **in order**. Do not skip stages.
+
+### Stage 1 — Client Authentication
+- Google Sign-In succeeds
+- Firebase user object exists
+- Failure here ≠ authorization problem
+
+### Stage 2 — Token Acquisition
+- ID token retrieved successfully
+- Token is freshly issued
+- Expired tokens cause false negatives
+
+### Stage 3 — Backend Reachability
+- `/health` reachable from client environment
+- Emulator vs physical device paths differ
+- Timeouts here indicate **networking**, not auth
+
+### Stage 4 — Token Verification
+- Admin SDK accepts token
+- Failures here are project / OAuth / ADC issues
+
+### Stage 5 — Firestore Lookup
+- Document ID matches `uid`
+- Collection name correct
+- Field names correctly cased
+
+### Stage 6 — Authorization Decision
+- `enabled == true`
+- Role present
+- Failures here correctly return **403**
+
+### Stage 7 — End-to-End Success
+- `/whoami` returns `200 OK`
+- Response includes `uid`, `email`, `role`, `enabled`
+
+---
+
+## 7. Common Failure Modes & Root Causes
+
+| Symptom | Likely Cause |
+|------|-------------|
+| 401 immediately | Missing / expired token |
+| 403 with “disabled” | `enabled` missing, false, or wrong type |
+| Firestore doc exists but ignored | Field name case mismatch |
+| Emulator works, phone times out | Backend bound to `127.0.0.1` |
+| Phone times out | Firewall or VPN blocking LAN |
+| Random failures after delay | Token expired |
+| OAuth errors | Wrong Web Client ID or wrong GCP project |
+
+---
+
+## 8. Bootstrap Admin Policy (One-Time)
+
+- One initial admin is created manually in Firestore
+- This step is **out-of-band** and performed once
+- After bootstrap:
+  - Backend enforces role-based behavior
+  - Option A (Firestore Console) or Option B (Admin App) manages approvals
+
+---
+
+## 9. Reference App Scope & Non-Goals (Authorization)
+
+The reference app:
+- Uses coarse roles only
+- Does not implement multi-tenant RBAC
+- Does not define business permissions
+- Exists solely to validate toolchain correctness
+
+Any production system must layer additional policy on top.
+
+---
+
+## 10. Known-Good End State (Reference Snapshot)
+
+All of the following are true:
+
+- Emulator `/whoami` → `200 OK`
+- Physical device `/whoami` → `200 OK`
+- Response includes:
+  ```json
+  {
+    "role": "admin",
+    "enabled": true
+  }
+  ```
+- No manual token copy is required
+- Backend reachable from both environments
+
+When this snapshot is true, Section 6.6 is complete.
