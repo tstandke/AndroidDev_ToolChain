@@ -156,6 +156,103 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 ---
 
+### Authorization & Backend Integration (Section 6.6)
+
+This section captures the **exact working state** of Section 6.6 at pause time, so work can resume deterministically without re-debugging.
+
+#### Backend Service (Local Development)
+
+- Authorization backend scaffold — **IN PROGRESS**
+  - Location: `backend/`
+  - Framework: **FastAPI**
+  - Runtime: **Python (venv-based)**
+  - Entry point: `backend/main.py`
+
+- Local startup (verified):
+  ```powershell
+  cd backend
+  .\.venv\Scripts\Activate.ps1
+  uvicorn main:app --reload
+  ```
+
+- Health endpoint — **DONE**
+  - Endpoint: `GET /health`
+  - Verified response:
+    ```json
+    {"status":"ok","project":"androiddev-toolchain"}
+    ```
+
+#### Firebase Admin SDK / GCP Context
+
+- Firebase Admin initialization — **DONE**
+  - Uses **Application Default Credentials (ADC)**
+  - Project is pinned for local determinism (avoid wrong-project token verification):
+    - `projectId = androiddev-toolchain`
+
+- GCP / ADC alignment — **DONE**
+  - `gcloud config set project androiddev-toolchain`
+  - `gcloud auth application-default set-quota-project androiddev-toolchain`
+  - Note: Multiple accounts are present; ADC login succeeded; access token printing works.
+
+#### Authentication Enforcement (401 Semantics)
+
+- Endpoint: `GET /whoami` — **DONE**
+  - Missing/malformed token → **401**
+  - Invalid/expired token → **401**
+  - Valid Firebase ID token → proceeds to authorization stage
+  - Verified: a reconstructed Firebase ID token returned `200 OK` with `uid` + `email`.
+
+#### Authorization Model (Firestore Allowlist)
+
+- Authorization source of truth — **DEFINED**
+  - Firestore collection: `authz_users`
+  - Document ID: Firebase `uid`
+  - Required fields:
+    - `enabled` (Boolean)
+    - `role` (String)
+    - `email` (String)
+
+- Admin bootstrap document — **CREATED (needs validation)**
+  - Collection: `authz_users`
+  - Document ID: `D0ir2ss1saXofBendf3zjoJdDGE3`
+  - Intended:
+    - `enabled: true`
+    - `role: "admin"`
+    - `email: "standket@gmail.com"`
+  - Firestore UI showed “Production mode?” prompt; doc was created.
+
+#### Authorization Enforcement (403 Semantics)
+
+- Backend enforcement — **DONE**
+  - Authenticated but not allowlisted → **403**
+  - Allowlisted but `enabled != true` → **403**
+  - Allowlisted + enabled → **200**
+
+- Current observed behavior — **BLOCKED (data-level)**
+  - `GET /whoami` returns:
+    ```json
+    {"detail":"Not authorized (disabled)"}
+    ```
+  - Interpretation:
+    - The allowlist document exists, but `enabled` is either missing, false, or stored as a non-boolean type (e.g., string).
+
+#### Token Handling (Development Notes)
+
+- Firebase ID tokens are short-lived (~1 hour). Re-testing after delays commonly yields **401 InvalidIdTokenError** due to expiration.
+- Manual copy/paste from logs is error-prone due to log truncation and injected prefixes.
+- Working approach (verified):
+  - Flutter prints token in fixed-size chunks with indices.
+  - PowerShell reconstructs token by stripping prefixes and concatenating chunk payloads.
+  - Reconstructed token produced a **200 OK** response previously.
+
+- Working evidence (prior):
+  - `curl.exe -H "Authorization: Bearer <token>" http://127.0.0.1:8000/whoami` returned:
+    ```json
+    {"uid":"D0ir2ss1saXofBendf3zjoJdDGE3","email":"standket@gmail.com","project":"androiddev-toolchain"}
+    ```
+
+---
+
 ## Known Issues / Root Cause Analysis (Resolved)
 
 - **Client ID transcription error (resolved)**
@@ -172,10 +269,16 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 
 ## Next Actions (Priority)
 
-1. **Section 6.6 Authorization & Backend Integration — NOT STARTED**
-   - Define authorization model and server enforcement path
-2. Capture final working auth flow notes under `docs/` (optional but recommended)
-3. Commit updated `Project_Prompt.md` and `STATUS.md` to GitHub
+1. **Section 6.6 — Fix Firestore allowlist doc field types**
+   - Confirm `authz_users/D0ir2ss1saXofBendf3zjoJdDGE3.enabled` is a **Boolean true** (not `"true"`).
+   - Re-test with a **fresh** Firebase ID token; expect `200 OK`.
+
+2. **Mark Section 6.6 baseline Authorization as DONE** once `200 OK` is confirmed for an allowlisted admin.
+
+3. **Eliminate manual token copy**
+   - Implement Flutter → backend `/whoami` call using the live ID token.
+
+4. Optionally, capture final working auth flow notes under `docs/6_6_Authorization.md` (include 401 vs 403 semantics and bootstrap policy).
 
 ---
 
@@ -184,3 +287,4 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 - Update this file whenever a status changes
 - Keep entries concise and factual
 - Capture *why* something was blocked or fixed, not just *that* it changed
+
