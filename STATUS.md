@@ -115,18 +115,28 @@ It complements (but does not replace) the specification in `Project_Prompt.md`.
 - Root cause fixed:
   - Firestore field name mismatch (`Enabled` vs `enabled`)
 
-Baseline success:
+- Token handling — **DONE**
+  - Manual token copy eliminated (emulator path)
+  - Flutter calls backend `GET /whoami` directly using a live Firebase ID token
+  - Emulator reaches host backend via `http://10.0.2.2:8000`
+
+Baseline success (backend):
 ```json
 {"uid":"D0ir2ss1saXofBendf3zjoJdDGE3","email":"standket@gmail.com","project":"androiddev-toolchain","role":"admin","enabled":true}
+```
+
+Baseline success (Flutter → backend, emulator):
+```text
+[whoami] {uid: D0ir2ss1saXofBendf3zjoJdDGE3, email: standket@gmail.com, project: androiddev-toolchain, role: admin, enabled: true}
 ```
 
 ---
 
 ## Next Actions
 
-1. Remove diagnostic logging from backend.
-2. Implement Flutter → backend `/whoami` call using live ID token.
-3. Capture final authorization notes in `docs/6_6_Authorization.md`.
+1. Confirm Flutter → backend `/whoami` call on **physical device** (Pixel 6) using PC LAN IP base URL.
+2. Capture final authorization notes in `docs/6_6_Authorization.md` (include schema, 401 vs 403 semantics, and case-sensitive field names).
+3. Optional: add a small dev helper to start backend + emulator (PowerShell script) to reduce friction.
 
 ---
 
