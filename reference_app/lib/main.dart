@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
 import 'auth_preflight_screen.dart';
+import 'startup_gate_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,31 +26,31 @@ class ReferenceApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Toolchain Reference App',
       theme: ThemeData(useMaterial3: true),
-      home: const HomeScreen(),
+      home: const StartupGateScreen(),
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+// class HomeScreen extends StatelessWidget {
+//   const HomeScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reference App')),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AuthPreflightScreen()),
-            );
-          },
-          child: const Text('Sign in with Google'),
-        ),
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: const Text('Reference App')),
+//       body: Center(
+//         child: ElevatedButton(
+//           onPressed: () {
+//             Navigator.of(context).push(
+//               MaterialPageRoute(builder: (_) => const AuthPreflightScreen()),
+//             );
+//           },
+//           child: const Text('Sign in with Google'),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 
 

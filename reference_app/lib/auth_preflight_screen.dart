@@ -1,5 +1,6 @@
 // lib/auth_preflight_screen.dart
 import 'dart:async';
+import 'local_biometric_gate.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -220,7 +221,7 @@ class _AuthPreflightScreenState extends State<AuthPreflightScreen> {
   }
 }
 
-class SignedInScreen extends StatelessWidget {
+class SignedInScreen extends StatefulWidget {
   final String googleEmail;
   final String firebaseEmail;
   final String firebaseUid;
@@ -233,7 +234,53 @@ class SignedInScreen extends StatelessWidget {
   });
 
   @override
+  State<SignedInScreen> createState() => _SignedInScreenState();
+}
+
+class _SignedInScreenState extends State<SignedInScreen> {
+  bool _allowed = false;
+  bool _checked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _runLocalGate();
+  }
+
+  Future<void> _runLocalGate() async {
+    final allowed = await LocalBiometricGate.allowAccessIfSignedIn();
+    if (!mounted) return;
+
+    if (!allowed) {
+      // Keep user on this screen and show a message.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Biometric unlock cancelled/failed.')),
+      );
+      // In reference app, do not force navigation. Just allow UI to remain usable.
+    }
+
+    setState(() {
+      _allowed = true;
+      _checked = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // While gate is running, keep UI minimal.
+    if (!_checked) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Signed in')),
+        body: const Center(child: Text('Locked…')),
+      );
+    }
+
+    // Gate passed.
+    if (!_allowed) {
+      // Should not occur due to pop() above, but keep safe.
+      return const SizedBox.shrink();
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Signed in')),
       body: Padding(
@@ -245,9 +292,9 @@ class SignedInScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
-            _row('Selected account', googleEmail),
-            _row('Firebase user', firebaseEmail),
-            _row('Firebase UID', firebaseUid),
+            _row('Selected account', widget.googleEmail),
+            _row('Firebase user', widget.firebaseEmail),
+            _row('Firebase UID', widget.firebaseUid),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () async {
@@ -280,3 +327,4 @@ class SignedInScreen extends StatelessWidget {
     );
   }
 }
+
