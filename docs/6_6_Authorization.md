@@ -1,10 +1,11 @@
 # 6.6 Authorization — Locked Schema & Workflow (Option A → Option B)
 
-This document locks the **authorization model, workflow, and validation procedure** for the toolchain reference application.
+This document locks the **authorization model, workflow, validation procedure, and diagnostic expectations** for the toolchain reference application.
 
 It is explicitly written to:
 - Prevent rediscovery of known pitfalls
 - Provide deterministic diagnostics when authorization fails
+- Enable an AI assistant (or human developer) to reason step‑by‑step through failures
 - Allow Option A (manual admin via Firestore Console) to evolve into Option B (Admin App)
   **without schema changes or rework**
 
@@ -22,6 +23,20 @@ It does **not** define:
 - Fine-grained RBAC beyond coarse roles
 
 The reference application exists to validate **mechanics and correctness**, not to serve as a production authorization system.
+
+---
+
+## 1.1 Terminology & Conventions
+
+The following terms are used consistently throughout this document:
+
+- **Authentication** — Proof of identity via Firebase Authentication.
+- **Authorization** — Permission enforcement via Firestore and backend logic.
+- **Allowlist** — Explicit authorization records keyed by Firebase `uid`.
+- **Bootstrap admin** — The initial administrator created manually out-of-band.
+- **Reference application** — A minimal validation artifact, not a production app.
+
+Terminology is precise by design; ambiguous usage should be treated as a defect.
 
 ---
 
@@ -68,7 +83,19 @@ The client UI must never determine authorization outcomes.
 - Valid token but not allowlisted or disabled → **403 Forbidden**
 - Valid token and allowlisted + enabled → **200 OK**
 
-These semantics are locked.
+These semantics are locked and must not be altered.
+
+### 3.3 Locked vs Evolvable Elements
+
+**Locked (must not change):**
+- UID-keyed authorization documents
+- `enabled` boolean gate
+- HTTP status semantics (401 / 403 / 200)
+
+**May evolve without schema migration:**
+- Role taxonomy (`admin`, `user`, etc.)
+- Admin experience (Option A → Option B)
+- Notification and UX flow
 
 ---
 
@@ -204,7 +231,7 @@ The reference app:
 - Does not define business permissions
 - Exists solely to validate toolchain correctness
 
-Any production system must layer additional policy on top.
+Production deployments must additionally enforce App Check, TLS, and secret isolation; these are intentionally out of scope for the reference app.
 
 ---
 
@@ -223,5 +250,20 @@ All of the following are true:
   ```
 - No manual token copy is required
 - Backend reachable from both environments
+
+---
+
+## 11. Minimal Test Matrix
+
+| Environment | Base URL | Expected |
+|------------|---------|----------|
+| Emulator | `http://10.0.2.2:8000` | `200 OK` |
+| Physical device | `http://<LAN_IP>:8000` | `200 OK` |
+
+---
+
+## 12. Documentation Hierarchy Note
+
+The concrete execution history and current validation state for this workflow are recorded in `STATUS.md`.
 
 When this snapshot is true, Section 6.6 is complete.
